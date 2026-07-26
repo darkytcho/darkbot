@@ -1,0 +1,10 @@
+{
+  "name": "darkbot",
+  "version": "1.0.0",
+  "description": "Bot for Grepolis",
+  "scripts": {
+    "dev": "nodemon --watch src --ext js -e js build.js",
+    "build": "node build.js"
+  },
+  "license": "MIT"
+}
