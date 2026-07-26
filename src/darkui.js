@@ -1,6 +1,7 @@
 class DarkUI {
     constructor() {
         this.panel = null;
+        this.styleEl = null;
         this.tabs = [];
         this.activeTab = null;
         this.isDragging = false;
@@ -8,8 +9,9 @@ class DarkUI {
     }
 
     createPanel({ id, title, width = 420, height = 400 }) {
-        const style = document.createElement('style');
-        style.textContent = `
+        this.styleEl = document.createElement('style');
+        this.styleEl.id = 'darkbot-style';
+        this.styleEl.textContent = `
             #darkbot-panel {
                 position: fixed; top: 80px; left: 80px;
                 width: ${width}px; height: ${height}px;
@@ -156,7 +158,7 @@ class DarkUI {
                 background: #a67c1a;
             }
         `;
-        document.head.appendChild(style);
+        document.head.appendChild(this.styleEl);
 
         this.panel = document.createElement('div');
         this.panel.id = 'darkbot-panel';
@@ -256,4 +258,9 @@ class DarkUI {
     static status(text, active = false) {
         return `<div class="db-status ${active ? 'db-status-on' : 'db-status-off'}">${text}</div>`;
     }
+
+    cleanup = () => {
+        if (this.styleEl) this.styleEl.remove();
+        if (this.panel) this.panel.remove();
+    };
 }

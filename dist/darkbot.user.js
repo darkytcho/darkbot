@@ -2,12 +2,48 @@
 // @name         DarkBot
 // @author       DarkBot
 // @description  Bot for Grepolis
-// @version      0.1.0-beta
+// @version      0.2.0-beta
 // @match        http://*.grepolis.com/game/*
 // @match        https://*.grepolis.com/game/*
+// @run-at       document-idle
 // ==/UserScript==
 
-class DarkUtil {
+(function () {
+    if (window.opener) {
+        window.close();
+        return;
+    }
+
+    document.head.appendChild(document.createElement('style')).textContent = `
+    .darkbot-toggle-btn {
+        position: fixed; top: 50%; right: 0;
+        transform: translateY(-50%);
+        width: 32px; height: 64px;
+        background: #1a0f06; border: 2px solid #8b6914;
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        cursor: pointer; z-index: 99998;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s; color: #d4a017;
+        font-size: 16px; font-weight: 900;
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .darkbot-toggle-btn:hover {
+        background: #8b6914; color: #fff;
+        width: 38px;
+    }
+`;
+    window._darkbotStyleEl = document.head.querySelector('style');
+
+    let script = document.head.appendChild(document.createElement('script'));
+    script.textContent = `
+    (function () {
+        if (window.opener) {
+            window.close();
+            return;
+        }
+
+        class DarkUtil {
     constructor(console, storage) {
         this.console = console;
         this.storage = storage;
@@ -53,10 +89,10 @@ class DarkUtil {
 class DarkStorage {
     getStorage = () => {
         const worldId = uw.Game.world_id;
-        const savedValue = localStorage.getItem(`${worldId}_darkBot`);
+        const savedValue = localStorage.getItem(\`${worldId}_darkBot\`);
         let storage = {};
         if (savedValue !== null && savedValue !== undefined) {
-            try { storage = JSON.parse(savedValue); } catch (e) { console.error(`DarkBot storage parse error: ${e}`); }
+            try { storage = JSON.parse(savedValue); } catch (e) { console.error(\`DarkBot storage parse error: ${e}\`); }
         }
         return storage;
     };
@@ -64,9 +100,9 @@ class DarkStorage {
     saveStorage = storage => {
         try {
             const worldId = uw.Game.world_id;
-            localStorage.setItem(`${worldId}_darkBot`, JSON.stringify(storage));
+            localStorage.setItem(\`${worldId}_darkBot\`, JSON.stringify(storage));
             return true;
-        } catch (e) { console.error(`DarkBot storage save error: ${e}`); return false; }
+        } catch (e) { console.error(\`DarkBot storage save error: ${e}\`); return false; }
     };
 
     save = (key, content) => {
@@ -97,7 +133,7 @@ class DarkConsole {
     };
 
     renderSettings = () => {
-        return `<div id="dark_console" class="db-console"></div>`;
+        return \`<div id="dark_console" class="db-console"></div>\`;
     };
 
     startLiveUpdate = () => {
@@ -108,7 +144,7 @@ class DarkConsole {
         const el = document.getElementById('dark_console');
         if (!el) return;
         el.innerHTML = this.logs.slice().reverse().map(l =>
-            `<div class="db-console-line"><span class="db-time">[${l.time}]</span> ${l.message}</div>`
+            \`<div class="db-console-line"><span class="db-time">[${l.time}]</span> ${l.message}</div>\`
         ).join('');
     };
 }
@@ -117,6 +153,7 @@ class DarkConsole {
 class DarkUI {
     constructor() {
         this.panel = null;
+        this.styleEl = null;
         this.tabs = [];
         this.activeTab = null;
         this.isDragging = false;
@@ -124,8 +161,9 @@ class DarkUI {
     }
 
     createPanel({ id, title, width = 420, height = 400 }) {
-        const style = document.createElement('style');
-        style.textContent = `
+        this.styleEl = document.createElement('style');
+        this.styleEl.id = 'darkbot-style';
+        this.styleEl.textContent = \`
             #darkbot-panel {
                 position: fixed; top: 80px; left: 80px;
                 width: ${width}px; height: ${height}px;
@@ -271,12 +309,12 @@ class DarkUI {
             #darkbot-panel .db-footer-btn.db-close-btn:hover {
                 background: #a67c1a;
             }
-        `;
-        document.head.appendChild(style);
+        \`;
+        document.head.appendChild(this.styleEl);
 
         this.panel = document.createElement('div');
         this.panel.id = 'darkbot-panel';
-        this.panel.innerHTML = `
+        this.panel.innerHTML = \`
             <div class="db-header">
                 <span class="db-header-title">${title}</span>
                 <button class="db-close">&times;</button>
@@ -286,7 +324,7 @@ class DarkUI {
             <div class="db-footer">
                 <div class="db-footer-btn db-close-btn">Fechar</div>
             </div>
-        `;
+        \`;
 
         document.body.appendChild(this.panel);
         this._setupDrag();
@@ -347,31 +385,36 @@ class DarkUI {
 
     /* Static helpers para gerar HTML */
     static section(title, content) {
-        return `<div class="db-section"><div class="db-section-title">${title}</div>${content}</div>`;
+        return \`<div class="db-section"><div class="db-section-title">${title}</div>${content}</div>\`;
     }
 
     static row(label, buttonsHtml) {
-        return `<div class="db-row"><span class="db-label">${label}</span>${buttonsHtml}</div>`;
+        return \`<div class="db-row"><span class="db-label">${label}</span>${buttonsHtml}</div>\`;
     }
 
     static btn(id, text, active = false) {
-        return `<div class="db-btn ${active ? 'db-btn-active' : ''}" data-darkbot-btn="${id}">${text}</div>`;
+        return \`<div class="db-btn ${active ? 'db-btn-active' : ''}" data-darkbot-btn="${id}">${text}</div>\`;
     }
 
     static btnDanger(id, text) {
-        return `<div class="db-btn db-btn-danger" data-darkbot-btn="${id}">${text}</div>`;
+        return \`<div class="db-btn db-btn-danger" data-darkbot-btn="${id}">${text}</div>\`;
     }
 
     static checkbox(id, label, on = false) {
-        return `<div class="db-checkbox ${on ? 'db-on' : ''}" data-darkbot-check="${id}">
+        return \`<div class="db-checkbox ${on ? 'db-on' : ''}" data-darkbot-check="${id}">
             <div class="db-checkbox-box"><span class="db-checkbox-check">\u2713</span></div>
             <span class="db-checkbox-label">${label}</span>
-        </div>`;
+        </div>\`;
     }
 
     static status(text, active = false) {
-        return `<div class="db-status ${active ? 'db-status-on' : 'db-status-off'}">${text}</div>`;
+        return \`<div class="db-status ${active ? 'db-status-on' : 'db-status-off'}">${text}</div>\`;
     }
+
+    cleanup = () => {
+        if (this.styleEl) this.styleEl.remove();
+        if (this.panel) this.panel.remove();
+    };
 }
 
 
@@ -478,7 +521,7 @@ class AutoFarm extends DarkUtil {
             const secs = Math.round(Math.max(this.timer, 0) / 1000);
             const min = Math.floor(secs / 60);
             const sec = secs % 60;
-            timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+            timerEl.textContent = \`${min}:${sec.toString().padStart(2, '0')}\`;
         }
     };
 
@@ -542,7 +585,7 @@ class AutoFarm extends DarkUtil {
 
     claimSingle = (town_id, farm_town_id, relation_id, option = 1) => {
         const data = {
-            model_url: `FarmTownPlayerRelation/${relation_id}`,
+            model_url: \`FarmTownPlayerRelation/${relation_id}\`,
             action_name: 'claim',
             arguments: { farm_town_id, type: 'resources', option },
             town_id,
@@ -594,7 +637,7 @@ class AutoFarm extends DarkUtil {
         });
 
     render = () => {
-        return DarkUI.section('Auto Farm', `
+        return DarkUI.section('Auto Farm', \`
             ${DarkUI.checkbox('af_toggle', 'Ativar AutoFarm', this.active)}
             <div id="af_status" class="${this.active ? 'db-status db-status-on' : 'db-status db-status-off'}">
                 ${this.active ? 'Ativo' : 'Inativo'}
@@ -603,17 +646,17 @@ class AutoFarm extends DarkUtil {
                 <span class="db-label">Proxima coleta:</span>
                 <span id="af_timer" style="color:#d4a017;font-weight:700;">--:--</span>
             </div>
-            ${DarkUI.row('Duracao', `
+            ${DarkUI.row('Duracao', \`
                 ${DarkUI.btn('dur_5', '5 min', this.timing === 300000)}
                 ${DarkUI.btn('dur_10', '10 min', this.timing === 600000)}
                 ${DarkUI.btn('dur_20', '20 min', this.timing === 1200000)}
-            `)}
-            ${DarkUI.row('Armazenamento', `
+            \`)}
+            ${DarkUI.row('Armazenamento', \`
                 ${DarkUI.btn('stor_80', '80%', this.percent === 0.8)}
                 ${DarkUI.btn('stor_90', '90%', this.percent === 0.9)}
                 ${DarkUI.btn('stor_100', '100%', this.percent === 1)}
-            `)}
-        `);
+            \`)}
+        \`);
     };
 
     afterRender = () => {
@@ -655,41 +698,53 @@ class DarkBot {
     }
 
     createToggleButton = () => {
-        const style = document.createElement('style');
-        style.textContent = `
-            .darkbot-toggle-btn {
-                position: fixed; top: 50%; right: 0;
-                transform: translateY(-50%);
-                width: 32px; height: 64px;
-                background: #0f3460; border: 2px solid #e94560;
-                border-right: none;
-                border-radius: 8px 0 0 8px;
-                cursor: pointer; z-index: 99998;
-                display: flex; align-items: center; justify-content: center;
-                transition: all 0.2s; color: #e94560;
-                font-size: 16px; font-weight: 900;
-                font-family: 'Segoe UI', Arial, sans-serif;
-            }
-            .darkbot-toggle-btn:hover {
-                background: #e94560; color: #fff;
-                width: 38px;
-            }
-        `;
-        document.head.appendChild(style);
-
         const btn = document.createElement('div');
         btn.className = 'darkbot-toggle-btn';
         btn.textContent = 'DB';
         btn.title = 'DarkBot';
-        btn.onclick = () => this.ui.toggle();
+        btn.id = 'darkbot-toggle';
         document.body.appendChild(btn);
+    };
+
+    cleanup = () => {
+        this.ui.cleanup();
+        const toggle = document.getElementById('darkbot-toggle');
+        if (toggle) toggle.remove();
     };
 }
 
-const darkBotLoader = setInterval(() => {
-    if (document.getElementById('loader')) return;
-    window.darkBot = new DarkBot();
-    clearInterval(darkBotLoader);
-}, 100);
 
 
+
+        setTimeout(function () {
+            window.addEventListener('beforeunload', function () {
+                document.querySelectorAll('.darkbot-toggle-btn, #darkbot-panel, #darkbot-style').forEach(function(el) { el.remove(); });
+                if (window._darkbotScript) window._darkbotScript.remove();
+                if (window._darkbotStyleEl) window._darkbotStyleEl.remove();
+                if (window._darkbotObserver) window._darkbotObserver.disconnect();
+            });
+
+            const loader = document.getElementById('loader');
+            if (loader) {
+                const observer = new MutationObserver(function (mutations) {
+                    for (const mutation of mutations) {
+                        for (const node of mutation.removedNodes) {
+                            if (node.id === 'loader') {
+                                observer.disconnect();
+                                window._darkbotObserver = null;
+                                window.darkBot = new DarkBot();
+                                return;
+                            }
+                        }
+                    }
+                });
+                observer.observe(loader.parentElement, { childList: true });
+                window._darkbotObserver = observer;
+            } else {
+                window.darkBot = new DarkBot();
+            }
+        }, 10);
+    })();
+`;
+    window._darkbotScript = script;
+})();
