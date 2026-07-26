@@ -1,27 +1,29 @@
 class DarkConsole {
     constructor() {
         this.logs = [];
+        this._liveInterval = null;
     }
 
     log = (message) => {
         const date = new Date();
         const time = date.toLocaleTimeString();
-        this.logs.push(`[${time}] ${message}`);
-        this.updateView();
+        this.logs.push({ time, message });
+        this._updateView();
     };
 
     renderSettings = () => {
-        setTimeout(() => this.updateView(), 100);
-        return `<div id="dark_console" style="padding: 5px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>`;
+        return `<div id="dark_console" class="db-console"></div>`;
     };
 
-    updateView = () => {
-        const $console = uw.$('#dark_console');
-        if (!$console.length) return;
-        this.logs.slice().reverse().forEach((msg, i) => {
-            if (!uw.$(`#dark_log_${i}`).length) {
-                $console.append(`<p id="dark_log_${i}" style="margin: 2px 0;">${msg}</p>`);
-            }
-        });
+    startLiveUpdate = () => {
+        this._updateView();
+    };
+
+    _updateView = () => {
+        const el = document.getElementById('dark_console');
+        if (!el) return;
+        el.innerHTML = this.logs.slice().reverse().map(l =>
+            `<div class="db-console-line"><span class="db-time">[${l.time}]</span> ${l.message}</div>`
+        ).join('');
     };
 }

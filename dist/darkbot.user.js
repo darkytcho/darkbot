@@ -2,7 +2,7 @@
 // @name         DarkBot
 // @author       DarkBot
 // @description  Bot for Grepolis
-// @version      1.0.0
+// @version      0.1.0-beta
 // @match        http://*.grepolis.com/game/*
 // @match        https://*.grepolis.com/game/*
 // ==/UserScript==
@@ -39,39 +39,6 @@ class DarkUtil {
         return polisList;
     };
 
-    getButtonHtml(id, text, fn, props) {
-        const name = this.constructor.name.charAt(0).toLowerCase() + this.constructor.name.slice(1);
-        props = isNaN(parseInt(props)) ? `'${props}'` : props;
-        const click = `window.darkBot.${name}.${fn.name}(${props || ''})`;
-        return `
-      <div id="${id}" style="cursor: pointer" class="button_new" onclick="${click}">
-        <div class="left"></div>
-        <div class="right"></div>
-        <div class="caption js-caption"> ${text} <div class="effect js-effect"></div></div>
-      </div>`;
-    }
-
-    getTitleHtml(id, text, fn, props, enable, desc = '(click to toggle)') {
-        const name = this.constructor.name.charAt(0).toLowerCase() + this.constructor.name.slice(1);
-        props = isNaN(parseInt(props)) && props ? `"${props}"` : props;
-        const click = `window.darkBot.${name}.${fn.name}(${props || ''})`;
-        const filter = 'brightness(100%) saturate(186%) hue-rotate(241deg)';
-        return `
-        <div class="game_border_top"></div>
-        <div class="game_border_bottom"></div>
-        <div class="game_border_left"></div>
-        <div class="game_border_right"></div>
-        <div class="game_border_corner corner1"></div>
-        <div class="game_border_corner corner2"></div>
-        <div class="game_border_corner corner3"></div>
-        <div class="game_border_corner corner4"></div>
-        <div id="${id}" style="cursor: pointer; filter: ${enable ? filter : ''}" class="game_header bold" onclick="${click}">
-            ${text}
-            <span class="command_count"></span>
-            <div style="position: absolute; right: 10px; top: 4px; font-size: 10px;"> ${desc} </div>
-        </div>`;
-    }
-
     countPopulation(obj) {
         const data = GameData.units;
         let total = 0;
@@ -79,61 +46,6 @@ class DarkUtil {
             total += data[key].population * obj[key];
         }
         return total;
-    }
-
-    createButton = (id, text, fn) => {
-        const $button = $('<div>', { id, class: 'button_new' });
-        $button.append($('<div>', { class: 'left' }));
-        $button.append($('<div>', { class: 'right' }));
-        $button.append($('<div>', {
-            class: 'caption js-caption',
-            html: `${text} <div class="effect js-effect"></div>`
-        }));
-        if (fn) $(document).on('click', `#${id}`, fn);
-        return $button;
-    }
-
-    createActivity = (background) => {
-        const $activity_wrap = $('<div class="activity_wrap"></div>');
-        const $activity = $('<div class="activity"></div>');
-        const $icon = $('<div class="icon"></div>').css({
-            "background": background,
-            "position": "absolute",
-            "top": "-1px",
-            "left": "-1px",
-        });
-        const $count = $('<div class="count js-caption"></div>').text(0);
-        $icon.append($count);
-        $activity.append($icon);
-        $activity_wrap.append($activity);
-        return { $activity, $count };
-    }
-
-    createPopup = (left, width, height, $content) => {
-        const $box = $('<div class="sandy-box js-dropdown-list"></div>').css({
-            "left": `${left}px`,
-            "position": "absolute",
-            "width": `${width}px`,
-            "height": `${height}px`,
-            "top": "29px",
-            "margin-left": "0px",
-            "display": "none",
-        });
-        const $corner_tl = $('<div class="corner_tl"></div>');
-        const $corner_tr = $('<div class="corner_tr"></div>');
-        const $corner_bl = $('<div class="corner_bl"></div>');
-        const $corner_br = $('<div class="corner_br"></div>');
-        const $border_t = $('<div class="border_t"></div>');
-        const $border_b = $('<div class="border_b"></div>');
-        const $border_l = $('<div class="border_l"></div>');
-        const $border_r = $('<div class="border_r"></div>');
-        const $middle = $('<div class="middle"></div>').css({
-            "left": "10px", "right": "20px", "top": "14px", "bottom": "20px",
-        });
-        const $middle_content = $('<div class="content js-dropdown-item-list"></div>').append($content);
-        $middle.append($middle_content);
-        $box.append($corner_tl, $corner_tr, $corner_bl, $corner_br, $border_t, $border_b, $border_l, $border_r, $middle);
-        return $box;
     }
 }
 
@@ -174,91 +86,264 @@ class DarkStorage {
 class DarkConsole {
     constructor() {
         this.logs = [];
+        this._liveInterval = null;
     }
 
     log = (message) => {
         const date = new Date();
         const time = date.toLocaleTimeString();
-        this.logs.push(`[${time}] ${message}`);
-        this.updateView();
+        this.logs.push({ time, message });
+        this._updateView();
     };
 
     renderSettings = () => {
-        setTimeout(() => this.updateView(), 100);
-        return `<div id="dark_console" style="padding: 5px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>`;
+        return `<div id="dark_console" class="db-console"></div>`;
     };
 
-    updateView = () => {
-        const $console = uw.$('#dark_console');
-        if (!$console.length) return;
-        this.logs.slice().reverse().forEach((msg, i) => {
-            if (!uw.$(`#dark_log_${i}`).length) {
-                $console.append(`<p id="dark_log_${i}" style="margin: 2px 0;">${msg}</p>`);
-            }
-        });
+    startLiveUpdate = () => {
+        this._updateView();
+    };
+
+    _updateView = () => {
+        const el = document.getElementById('dark_console');
+        if (!el) return;
+        el.innerHTML = this.logs.slice().reverse().map(l =>
+            `<div class="db-console-line"><span class="db-time">[${l.time}]</span> ${l.message}</div>`
+        ).join('');
     };
 }
 
 
-class DarkWindow {
-    constructor({ id, title, size, tabs, start_tab, minimizable = true }) {
-        this.minimizable = minimizable;
-        this.width = size[0];
-        this.height = size[1];
-        this.title = title;
-        this.id = id;
-        this.tabs = tabs;
-        this.start_tab = start_tab;
+class DarkUI {
+    constructor() {
+        this.panel = null;
+        this.tabs = [];
+        this.activeTab = null;
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
+    }
 
-        const createWindowType = (name, title, width, height, minimizable) => {
-            function WndHandler(wndhandle) { this.wnd = wndhandle; }
-            Function.prototype.inherits.call(WndHandler, uw.WndHandlerDefault);
-            WndHandler.prototype.getDefaultWindowOptions = function () {
-                return {
-                    position: ['center', 'center', 100, 100],
-                    width, height, minimizable, title,
-                };
-            };
-            uw.GPWindowMgr.addWndType(name, `${name}_darkbot`, WndHandler, 1);
-        };
+    createPanel({ id, title, width = 420, height = 400 }) {
+        this.panel = document.createElement('div');
+        this.panel.id = `darkbot-${id}`;
+        this.panel.innerHTML = `
+            <style>
+                #darkbot-${id} {
+                    position: fixed; top: 80px; left: 80px;
+                    width: ${width}px; height: ${height}px;
+                    background: #1a1a2e; border: 1px solid #16213e;
+                    border-radius: 8px; z-index: 99999;
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    font-size: 12px; color: #e0e0e0;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+                    display: none; flex-direction: column;
+                    overflow: hidden;
+                }
+                #darkbot-${id}.darkbot-visible { display: flex; }
 
-        const getTabById = (id) => this.tabs.filter((tab) => tab.id === id)[0];
+                #darkbot-${id} .db-header {
+                    background: #0f3460; padding: 10px 14px;
+                    display: flex; align-items: center; justify-content: space-between;
+                    cursor: move; user-select: none;
+                    border-bottom: 2px solid #e94560;
+                    flex-shrink: 0;
+                }
+                #darkbot-${id} .db-header-title {
+                    font-size: 14px; font-weight: 700; color: #fff;
+                    letter-spacing: 1px;
+                }
+                #darkbot-${id} .db-close {
+                    background: none; border: none; color: #999;
+                    font-size: 18px; cursor: pointer; padding: 0 4px;
+                    line-height: 1;
+                }
+                #darkbot-${id} .db-close:hover { color: #e94560; }
 
-        this.activate = function () {
-            createWindowType(this.id, this.title, this.width, this.height, this.minimizable);
-            uw.$(`<style id="${this.id}_style">
-                #${this.id} .tab_icon { left: 23px; }
-                #${this.id} { top: -36px; right: 95px; }
-                #${this.id} .submenu_link { color: #000; }
-                #${this.id} .submenu_link:hover { text-decoration: none; }
-                #${this.id} li { float: left; min-width: 60px; }
-            </style>`).appendTo('head');
-        };
+                #darkbot-${id} .db-tabs {
+                    display: flex; background: #16213e;
+                    border-bottom: 1px solid #0f3460;
+                    flex-shrink: 0;
+                }
+                #darkbot-${id} .db-tab {
+                    padding: 8px 16px; cursor: pointer;
+                    color: #888; font-size: 11px; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: 0.5px;
+                    border-bottom: 2px solid transparent;
+                    transition: all 0.15s;
+                }
+                #darkbot-${id} .db-tab:hover { color: #ccc; }
+                #darkbot-${id} .db-tab.db-tab-active {
+                    color: #e94560; border-bottom-color: #e94560;
+                }
 
-        this.openWindow = function () {
-            let wn = uw.Layout.wnd.getOpenFirst(uw.GPWindowMgr[`TYPE_${this.id}`]);
-            if (wn) { if (wn.isMinimized()) wn.maximizeWindow(); return; }
+                #darkbot-${id} .db-body {
+                    flex: 1; overflow-y: auto; padding: 12px;
+                }
+                #darkbot-${id} .db-body::-webkit-scrollbar { width: 6px; }
+                #darkbot-${id} .db-body::-webkit-scrollbar-track { background: #1a1a2e; }
+                #darkbot-${id} .db-body::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 3px; }
 
-            let content = `<ul id="${this.id}" class="menu_inner"></ul><div id="${this.id}_content"></div>`;
-            uw.Layout.wnd.Create(uw.GPWindowMgr[`TYPE_${this.id}`]).setContent(content);
+                #darkbot-${id} .db-section {
+                    background: #16213e; border-radius: 6px;
+                    padding: 12px; margin-bottom: 10px;
+                    border: 1px solid #1a1a3e;
+                }
+                #darkbot-${id} .db-section-title {
+                    font-size: 12px; font-weight: 700; color: #e94560;
+                    margin-bottom: 8px; text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                #darkbot-${id} .db-row {
+                    display: flex; gap: 6px; margin-bottom: 6px;
+                    align-items: center; flex-wrap: wrap;
+                }
+                #darkbot-${id} .db-label {
+                    font-size: 11px; color: #999; min-width: 80px;
+                    font-weight: 600;
+                }
 
-            this.tabs.forEach((e) => {
-                uw.$(`<li><a id="${e.id}" class="submenu_link" href="#"><span class="left"><span class="right"><span class="middle"><span class="tab_label"> ${e.title} </span></span></span></span></a></li>`).appendTo(`#${this.id}`);
-            });
+                #darkbot-${id} .db-btn {
+                    padding: 5px 12px; border-radius: 4px;
+                    border: 1px solid #333; background: #222;
+                    color: #ccc; cursor: pointer; font-size: 11px;
+                    font-weight: 600; transition: all 0.15s;
+                    white-space: nowrap;
+                }
+                #darkbot-${id} .db-btn:hover { background: #333; border-color: #555; color: #fff; }
+                #darkbot-${id} .db-btn.db-btn-active {
+                    background: #e94560; border-color: #e94560; color: #fff;
+                }
+                #darkbot-${id} .db-btn.db-btn-disabled {
+                    opacity: 0.4; pointer-events: none;
+                }
 
-            let tabs = this.tabs.map(e => `#${this.id} #${e.id}`).join(', ');
-            let self = this;
-            uw.$(tabs).click(function () { self.renderTab(this.id); });
-            this.renderTab(this.tabs[this.start_tab].id);
-        };
+                #darkbot-${id} .db-toggle {
+                    display: flex; align-items: center; gap: 8px;
+                    cursor: pointer; padding: 6px 0;
+                }
+                #darkbot-${id} .db-toggle-switch {
+                    width: 36px; height: 20px; border-radius: 10px;
+                    background: #333; position: relative; transition: background 0.2s;
+                    flex-shrink: 0;
+                }
+                #darkbot-${id} .db-toggle-switch::after {
+                    content: ''; position: absolute; top: 2px; left: 2px;
+                    width: 16px; height: 16px; border-radius: 50%;
+                    background: #888; transition: all 0.2s;
+                }
+                #darkbot-${id} .db-toggle.db-toggle-on .db-toggle-switch {
+                    background: #e94560;
+                }
+                #darkbot-${id} .db-toggle.db-toggle-on .db-toggle-switch::after {
+                    left: 18px; background: #fff;
+                }
+                #darkbot-${id} .db-toggle-label {
+                    font-size: 11px; color: #ccc; font-weight: 600;
+                }
 
-        this.renderTab = function (id) {
-            let tab = getTabById(id);
-            uw.$(`#${this.id}_content`).html(tab.render());
-            uw.$(`#${this.id} .active`).removeClass('active');
-            uw.$(`#${id}`).addClass('active');
+                #darkbot-${id} .db-status {
+                    font-size: 11px; color: #666; padding: 4px 0;
+                }
+                #darkbot-${id} .db-status.db-status-on { color: #4caf50; }
+                #darkbot-${id} .db-status.db-status-off { color: #e94560; }
+
+                #darkbot-${id} .db-console {
+                    font-family: 'Consolas', monospace; font-size: 10px;
+                    max-height: 200px; overflow-y: auto;
+                }
+                #darkbot-${id} .db-console-line {
+                    padding: 2px 0; border-bottom: 1px solid #1a1a2e;
+                    color: #888;
+                }
+                #darkbot-${id} .db-console-line .db-time { color: #555; }
+            </style>
+
+            <div class="db-header">
+                <span class="db-header-title">DARKBOT</span>
+                <button class="db-close">&times;</button>
+            </div>
+            <div class="db-tabs"></div>
+            <div class="db-body"></div>
+        `;
+
+        document.body.appendChild(this.panel);
+        this._setupDrag();
+        this.panel.querySelector('.db-close').onclick = () => this.hide();
+        return this;
+    }
+
+    addTab({ id, label, render }) {
+        this.tabs.push({ id, label, render });
+        const tabsEl = this.panel.querySelector('.db-tabs');
+        const tab = document.createElement('div');
+        tab.className = 'db-tab';
+        tab.dataset.tab = id;
+        tab.textContent = label;
+        tab.onclick = () => this._selectTab(id);
+        tabsEl.appendChild(tab);
+        if (!this.activeTab) this._selectTab(id);
+    }
+
+    _selectTab(id) {
+        this.activeTab = id;
+        this.panel.querySelectorAll('.db-tab').forEach(t => {
+            t.classList.toggle('db-tab-active', t.dataset.tab === id);
+        });
+        const tab = this.tabs.find(t => t.id === id);
+        if (tab) {
+            this.panel.querySelector('.db-body').innerHTML = '';
+            const content = document.createElement('div');
+            content.innerHTML = tab.render();
+            this.panel.querySelector('.db-body').appendChild(content);
             if (tab.afterRender) tab.afterRender();
+        }
+    }
+
+    show() { this.panel.classList.add('darkbot-visible'); }
+    hide() { this.panel.classList.remove('darkbot-visible'); }
+    toggle() { this.panel.classList.toggle('darkbot-visible'); }
+    isVisible() { return this.panel.classList.contains('darkbot-visible'); }
+
+    refresh() { if (this.activeTab) this._selectTab(this.activeTab); }
+
+    _setupDrag() {
+        const header = this.panel.querySelector('.db-header');
+        header.onmousedown = (e) => {
+            if (e.target.classList.contains('db-close')) return;
+            this.isDragging = true;
+            this.dragOffset.x = e.clientX - this.panel.offsetLeft;
+            this.dragOffset.y = e.clientY - this.panel.offsetTop;
         };
+        document.onmousemove = (e) => {
+            if (!this.isDragging) return;
+            this.panel.style.left = (e.clientX - this.dragOffset.x) + 'px';
+            this.panel.style.top = (e.clientY - this.dragOffset.y) + 'px';
+        };
+        document.onmouseup = () => { this.isDragging = false; };
+    }
+
+    /* Helpers para criar HTML de botoes/secoes */
+    static section(title, content) {
+        return `<div class="db-section"><div class="db-section-title">${title}</div>${content}</div>`;
+    }
+
+    static row(label, buttonsHtml) {
+        return `<div class="db-row"><span class="db-label">${label}</span>${buttonsHtml}</div>`;
+    }
+
+    static btn(id, text, active = false) {
+        return `<div class="db-btn ${active ? 'db-btn-active' : ''}" data-darkbot-btn="${id}">${text}</div>`;
+    }
+
+    static toggle(id, label, on = false) {
+        return `<div class="db-toggle ${on ? 'db-toggle-on' : ''}" data-darkbot-toggle="${id}">
+            <div class="db-toggle-switch"></div>
+            <span class="db-toggle-label">${label}</span>
+        </div>`;
+    }
+
+    static status(text, active = false) {
+        return `<div class="db-status ${active ? 'db-status-on' : 'db-status-off'}">${text}</div>`;
     }
 }
 
@@ -271,101 +356,19 @@ class AutoFarm extends DarkUtil {
         this.active = this.storage.load('af_active', false);
         this.timer = 0;
         this.lastTime = Date.now();
-
-        const { $activity, $count } = this.createActivity("url(https://gpit.innogamescdn.com/images/game/premium_features/feature_icons_2.08.png) no-repeat 0 -240px");
-        this.$activity = $activity;
-        this.$count = $count;
-        this.$activity.on('click', this.toggle);
-        this.createDropdown();
-        this.updateButtons();
-
         if (this.active) this.active = setInterval(this.main, 1000);
     }
 
-    createDropdown = () => {
-        this.$content = $("<div></div>");
-        this.$title = $("<p>Dark Farm</p>").css({ "text-align": "center", "margin": "2px", "font-weight": "bold", "font-size": "16px" });
-        this.$content.append(this.$title);
-
-        this.$duration = $("<p>Duração:</p>").css({ "text-align": "left", "margin": "2px", "font-weight": "bold" });
-        this.$button5 = this.createButton("dark_farm_5", "5 min", this.toggleDuration);
-        this.$button10 = this.createButton("dark_farm_10", "10 min", this.toggleDuration);
-        this.$button20 = this.createButton("dark_farm_20", "20 min", this.toggleDuration);
-        this.$content.append(this.$duration, this.$button5, this.$button10, this.$button20);
-
-        this.$storageLabel = $("<p>Armazenamento:</p>").css({ "text-align": "left", "margin": "2px", "font-weight": "bold" });
-        this.$button80 = this.createButton("dark_farm_80", "80%", this.toggleStorage).css({ "width": "70px" });
-        this.$button90 = this.createButton("dark_farm_90", "90%", this.toggleStorage).css({ "width": "80px" });
-        this.$button100 = this.createButton("dark_farm_100", "100%", this.toggleStorage).css({ "width": "80px" });
-        this.$content.append(this.$storageLabel, this.$button80, this.$button90, this.$button100);
-
-        this.$popup = this.createPopup(423, 250, 170, this.$content);
-        this.dropdown_active = false;
-
-        const close = () => { if (!this.dropdown_active) this.$popup.hide(); this.dropdown_active = false; };
-        const open = () => { if (this.dropdown_active) this.$popup.show(); };
-
-        this.$activity.on({
-            mouseenter: () => { this.dropdown_active = true; setTimeout(open, 1000); },
-            mouseleave: () => { this.dropdown_active = false; setTimeout(close, 50); }
-        });
-        this.$popup.on({
-            mouseenter: () => { this.dropdown_active = true; },
-            mouseleave: () => { this.dropdown_active = false; setTimeout(close, 50); }
-        });
-    }
-
-    updateButtons = () => {
-        this.$button5.addClass('disabled');
-        this.$button10.addClass('disabled');
-        this.$button20.addClass('disabled');
-        this.$button80.addClass('disabled');
-        this.$button90.addClass('disabled');
-        this.$button100.addClass('disabled');
-
-        if (this.timing == 300000) this.$button5.removeClass('disabled');
-        if (this.timing == 600000) this.$button10.removeClass('disabled');
-        if (this.timing == 1200000) this.$button20.removeClass('disabled');
-
-        if (this.percent == 0.8) this.$button80.removeClass('disabled');
-        if (this.percent == 0.9) this.$button90.removeClass('disabled');
-        if (this.percent == 1) this.$button100.removeClass('disabled');
-
-        if (!this.active) {
-            this.$count.css('color', "red");
-            this.$count.text("");
-        }
-    }
-
-    toggleDuration = (event) => {
-        const { id } = event.currentTarget;
-        if (id == "dark_farm_5") this.timing = 300_000;
-        if (id == "dark_farm_10") this.timing = 600_000;
-        if (id == "dark_farm_20") this.timing = 1_200_000;
-        this.storage.save('af_timing', this.timing);
+    setDuration = (ms) => {
+        this.timing = ms;
+        this.storage.save('af_timing', ms);
         this.updateButtons();
-    }
+    };
 
-    toggleStorage = (event) => {
-        const { id } = event.currentTarget;
-        if (id == "dark_farm_80") this.percent = 0.8;
-        if (id == "dark_farm_90") this.percent = 0.9;
-        if (id == "dark_farm_100") this.percent = 1;
-        this.storage.save('af_percent', this.percent);
+    setPercent = (p) => {
+        this.percent = p;
+        this.storage.save('af_percent', p);
         this.updateButtons();
-    }
-
-    generateList = () => {
-        const islands_list = new Set();
-        const polis_list = [];
-        const { models: towns } = uw.MM.getOnlyCollectionByName('Town');
-        for (const town of towns) {
-            const { on_small_island, island_id, id } = town.attributes;
-            if (on_small_island || islands_list.has(island_id)) continue;
-            islands_list.add(island_id);
-            polis_list.push(town.id);
-        }
-        return polis_list;
     };
 
     toggle = () => {
@@ -380,6 +383,45 @@ class AutoFarm extends DarkUtil {
         }
         this.storage.save('af_active', !!this.active);
         this.updateButtons();
+    };
+
+    updateButtons = () => {
+        const panel = document.getElementById('darkbot-darkbot');
+        if (!panel) return;
+
+        panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {
+            const id = btn.dataset.darkbotBtn;
+            let isActive = false;
+            if (id === 'dur_5') isActive = this.timing === 300000;
+            if (id === 'dur_10') isActive = this.timing === 600000;
+            if (id === 'dur_20') isActive = this.timing === 1200000;
+            if (id === 'stor_80') isActive = this.percent === 0.8;
+            if (id === 'stor_90') isActive = this.percent === 0.9;
+            if (id === 'stor_100') isActive = this.percent === 1;
+            btn.classList.toggle('db-btn-active', isActive);
+        });
+
+        const toggleEl = panel.querySelector('[data-darkbot-toggle="af_toggle"]');
+        if (toggleEl) toggleEl.classList.toggle('db-toggle-on', !!this.active);
+
+        const statusEl = panel.querySelector('#af_status');
+        if (statusEl) {
+            statusEl.className = this.active ? 'db-status db-status-on' : 'db-status db-status-off';
+            statusEl.textContent = this.active ? 'Ativo' : 'Inativo';
+        }
+    };
+
+    generateList = () => {
+        const islands_list = new Set();
+        const polis_list = [];
+        const { models: towns } = uw.MM.getOnlyCollectionByName('Town');
+        for (const town of towns) {
+            const { on_small_island, island_id, id } = town.attributes;
+            if (on_small_island || islands_list.has(island_id)) continue;
+            islands_list.add(island_id);
+            polis_list.push(town.id);
+        }
+        return polis_list;
     };
 
     getNextCollection = () => {
@@ -404,9 +446,13 @@ class AutoFarm extends DarkUtil {
         const currentTime = Date.now();
         this.timer -= currentTime - this.lastTime;
         this.lastTime = currentTime;
-        const isCaptainActive = uw.GameDataPremium.isAdvisorActivated('captain');
-        this.$count.text(Math.round(Math.max(this.timer, 0) / 1000));
-        this.$count.css('color', isCaptainActive ? "#1aff1a" : "yellow");
+        const timerEl = document.querySelector('#af_timer');
+        if (timerEl) {
+            const secs = Math.round(Math.max(this.timer, 0) / 1000);
+            const min = Math.floor(secs / 60);
+            const sec = secs % 60;
+            timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+        }
     };
 
     claim = async () => {
@@ -454,7 +500,6 @@ class AutoFarm extends DarkUtil {
         if (next_collection && (this.timer > next_collection + 60 * 1_000 || this.timer < next_collection)) {
             this.timer = next_collection + Math.floor(Math.random() * 20_000) + 10_000;
         }
-
         if (this.timer < 1) {
             clearInterval(this.active);
             this.active = null;
@@ -463,6 +508,7 @@ class AutoFarm extends DarkUtil {
             const rand = Math.floor(Math.random() * 20_000) + 10_000;
             this.timer = this.timing + rand;
             if (this.timer < next_collection) this.timer = next_collection + rand;
+            this.storage.save('af_active', true);
         }
         this.updateTimer();
     };
@@ -520,34 +566,48 @@ class AutoFarm extends DarkUtil {
             uw.gpAjax.ajaxGet('farm_town_overviews', 'get_farm_towns_for_town', data, false, () => resolve());
         });
 
-    settings = () => {
-        return `
-        <div class="game_border" style="margin-bottom: 20px">
-            <div class="game_border_top"></div>
-            <div class="game_border_bottom"></div>
-            <div class="game_border_left"></div>
-            <div class="game_border_right"></div>
-            <div class="game_border_corner corner1"></div>
-            <div class="game_border_corner corner2"></div>
-            <div class="game_border_corner corner3"></div>
-            <div class="game_border_corner corner4"></div>
-            <div id="auto_farm_title" style="cursor: pointer; filter: ${this.active ? 'brightness(100%) saturate(186%) hue-rotate(241deg)' : ''}" class="game_header bold" onclick="window.darkBot.autoFarm.toggle()">
-                Auto Farm <span class="command_count"></span>
-                <div style="position: absolute; right: 10px; top: 4px; font-size: 10px;"> (click to toggle) </div>
+    render = () => {
+        return DarkUI.section('Auto Farm', `
+            ${DarkUI.toggle('af_toggle', 'Ativar AutoFarm', this.active)}
+            <div id="af_status" class="${this.active ? 'db-status db-status-on' : 'db-status db-status-off'}">
+                ${this.active ? 'Ativo' : 'Inativo'}
             </div>
-            <div style="padding: 5px;">
-                <p style="margin: 2px; font-weight: bold;">Duração:</p>
-                ${this.getButtonHtml('farm_time_5', '5 min', this.toggleDuration, 'dark_farm_5')}
-                ${this.getButtonHtml('farm_time_10', '10 min', this.toggleDuration, 'dark_farm_10')}
-                ${this.getButtonHtml('farm_time_20', '20 min', this.toggleDuration, 'dark_farm_20')}
+            <div style="margin-top:6px;">
+                <span class="db-label">Proximo coleta:</span>
+                <span id="af_timer" style="color:#e94560;font-weight:700;">--:--</span>
             </div>
-            <div style="padding: 5px;">
-                <p style="margin: 2px; font-weight: bold;">Armazenamento:</p>
-                ${this.getButtonHtml('farm_stor_80', '80%', this.toggleStorage, 'dark_farm_80')}
-                ${this.getButtonHtml('farm_stor_90', '90%', this.toggleStorage, 'dark_farm_90')}
-                ${this.getButtonHtml('farm_stor_100', '100%', this.toggleStorage, 'dark_farm_100')}
-            </div>
-        </div>`;
+            ${DarkUI.row('Duracao', `
+                <div class="db-btn ${this.timing === 300000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_5">5 min</div>
+                <div class="db-btn ${this.timing === 600000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_10">10 min</div>
+                <div class="db-btn ${this.timing === 1200000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_20">20 min</div>
+            `)}
+            ${DarkUI.row('Armazenamento', `
+                <div class="db-btn ${this.percent === 0.8 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_80">80%</div>
+                <div class="db-btn ${this.percent === 0.9 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_90">90%</div>
+                <div class="db-btn ${this.percent === 1 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_100">100%</div>
+            `)}
+        `);
+    };
+
+    afterRender = () => {
+        const panel = document.getElementById('darkbot-darkbot');
+        if (!panel) return;
+
+        panel.querySelector('[data-darkbot-toggle="af_toggle"]').onclick = () => this.toggle();
+
+        panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {
+            btn.onclick = () => {
+                const id = btn.dataset.darkbotBtn;
+                if (id === 'dur_5') this.setDuration(300000);
+                if (id === 'dur_10') this.setDuration(600000);
+                if (id === 'dur_20') this.setDuration(1200000);
+                if (id === 'stor_80') this.setPercent(0.8);
+                if (id === 'stor_90') this.setPercent(0.9);
+                if (id === 'stor_100') this.setPercent(1);
+            };
+        });
+
+        this.updateTimer();
     };
 }
 
@@ -556,69 +616,52 @@ class DarkBot {
     constructor() {
         this.console = new DarkConsole();
         this.storage = new DarkStorage();
-        this.$ui = $("#ui_box");
-
         this.autoFarm = new AutoFarm(this.console, this.storage);
 
-        this.settingsWindow = new DarkWindow({
-            id: 'DARK_BOT',
-            title: 'DarkBot',
-            size: [845, 300],
-            tabs: [
-                {
-                    title: 'Farm',
-                    id: 'farm',
-                    render: () => this.autoFarm.settings(),
-                },
-                {
-                    title: 'Console',
-                    id: 'console',
-                    render: this.console.renderSettings,
-                },
-            ],
-            start_tab: 0,
-        });
+        this.ui = new DarkUI();
+        this.ui.createPanel({ id: 'darkbot', title: 'DARKBOT', width: 420, height: 420 });
+        this.ui.addTab({ id: 'farm', label: 'Farm', render: () => this.autoFarm.render(), afterRender: () => this.autoFarm.afterRender() });
+        this.ui.addTab({ id: 'console', label: 'Console', render: () => this.console.renderSettings(), afterRender: () => this.console.startLiveUpdate() });
 
-        this.setup();
+        this.createToggleButton();
+        this.console.log('DarkBot carregado com sucesso!');
     }
 
-    setup = () => {
-        this.settingsWindow.activate();
-
-        uw.$('head').append(`<style>
-            .dark_bot_btn {
-                width: 30px; height: 30px; border-radius: 50%;
-                background: #2a2a2a; border: 2px solid #555;
-                cursor: pointer; display: flex; align-items: center;
-                justify-content: center; transition: all 0.2s;
+    createToggleButton = () => {
+        const style = document.createElement('style');
+        style.textContent = `
+            .darkbot-toggle-btn {
+                position: fixed; top: 50%; right: 0;
+                transform: translateY(-50%);
+                width: 32px; height: 64px;
+                background: #0f3460; border: 2px solid #e94560;
+                border-right: none;
+                border-radius: 8px 0 0 8px;
+                cursor: pointer; z-index: 99998;
+                display: flex; align-items: center; justify-content: center;
+                transition: all 0.2s; color: #e94560;
+                font-size: 16px; font-weight: 900;
+                font-family: 'Segoe UI', Arial, sans-serif;
             }
-            .dark_bot_btn:hover { background: #444; border-color: #ffd700; }
-            .dark_bot_btn::after {
-                content: "\\2699"; font-size: 18px; color: #ccc;
+            .darkbot-toggle-btn:hover {
+                background: #e94560; color: #fff;
+                width: 38px;
             }
-            .dark_bot_btn:hover::after { color: #ffd700; }
-        </style>`);
+        `;
+        document.head.appendChild(style);
 
-        const $btn = uw.$(`<div class="dark_bot_btn" title="DarkBot Settings"></div>`);
-        $btn.on('click', () => this.settingsWindow.openWindow());
-
-        // Tenta adicionar ao lado dos deuses, senão adiciona no topo
-        const $gods = uw.$('.gods_area_buttons');
-        if ($gods.length) {
-            $gods.append($btn);
-        } else {
-            uw.$('#ui_box').prepend(
-                uw.$('<div>').css({ position: 'absolute', top: '5px', right: '10px', zIndex: 9999 }).append($btn)
-            );
-        }
-
-        this.console.log('DarkBot carregado com sucesso!');
+        const btn = document.createElement('div');
+        btn.className = 'darkbot-toggle-btn';
+        btn.textContent = 'DB';
+        btn.title = 'DarkBot';
+        btn.onclick = () => this.ui.toggle();
+        document.body.appendChild(btn);
     };
 }
 
 const darkBotLoader = setInterval(() => {
-    if ($("#loader").length > 0) return;
-    uw.darkBot = new DarkBot();
+    if (document.getElementById('loader')) return;
+    window.darkBot = new DarkBot();
     clearInterval(darkBotLoader);
 }, 100);
 

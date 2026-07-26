@@ -2,68 +2,51 @@ class DarkBot {
     constructor() {
         this.console = new DarkConsole();
         this.storage = new DarkStorage();
-        this.$ui = $("#ui_box");
-
         this.autoFarm = new AutoFarm(this.console, this.storage);
 
-        this.settingsWindow = new DarkWindow({
-            id: 'DARK_BOT',
-            title: 'DarkBot',
-            size: [845, 300],
-            tabs: [
-                {
-                    title: 'Farm',
-                    id: 'farm',
-                    render: () => this.autoFarm.settings(),
-                },
-                {
-                    title: 'Console',
-                    id: 'console',
-                    render: this.console.renderSettings,
-                },
-            ],
-            start_tab: 0,
-        });
+        this.ui = new DarkUI();
+        this.ui.createPanel({ id: 'darkbot', title: 'DARKBOT', width: 420, height: 420 });
+        this.ui.addTab({ id: 'farm', label: 'Farm', render: () => this.autoFarm.render(), afterRender: () => this.autoFarm.afterRender() });
+        this.ui.addTab({ id: 'console', label: 'Console', render: () => this.console.renderSettings(), afterRender: () => this.console.startLiveUpdate() });
 
-        this.setup();
+        this.createToggleButton();
+        this.console.log('DarkBot carregado com sucesso!');
     }
 
-    setup = () => {
-        this.settingsWindow.activate();
-
-        uw.$('head').append(`<style>
-            .dark_bot_btn {
-                width: 30px; height: 30px; border-radius: 50%;
-                background: #2a2a2a; border: 2px solid #555;
-                cursor: pointer; display: flex; align-items: center;
-                justify-content: center; transition: all 0.2s;
+    createToggleButton = () => {
+        const style = document.createElement('style');
+        style.textContent = `
+            .darkbot-toggle-btn {
+                position: fixed; top: 50%; right: 0;
+                transform: translateY(-50%);
+                width: 32px; height: 64px;
+                background: #0f3460; border: 2px solid #e94560;
+                border-right: none;
+                border-radius: 8px 0 0 8px;
+                cursor: pointer; z-index: 99998;
+                display: flex; align-items: center; justify-content: center;
+                transition: all 0.2s; color: #e94560;
+                font-size: 16px; font-weight: 900;
+                font-family: 'Segoe UI', Arial, sans-serif;
             }
-            .dark_bot_btn:hover { background: #444; border-color: #ffd700; }
-            .dark_bot_btn::after {
-                content: "\\2699"; font-size: 18px; color: #ccc;
+            .darkbot-toggle-btn:hover {
+                background: #e94560; color: #fff;
+                width: 38px;
             }
-            .dark_bot_btn:hover::after { color: #ffd700; }
-        </style>`);
+        `;
+        document.head.appendChild(style);
 
-        const $btn = uw.$(`<div class="dark_bot_btn" title="DarkBot Settings"></div>`);
-        $btn.on('click', () => this.settingsWindow.openWindow());
-
-        // Tenta adicionar ao lado dos deuses, senão adiciona no topo
-        const $gods = uw.$('.gods_area_buttons');
-        if ($gods.length) {
-            $gods.append($btn);
-        } else {
-            uw.$('#ui_box').prepend(
-                uw.$('<div>').css({ position: 'absolute', top: '5px', right: '10px', zIndex: 9999 }).append($btn)
-            );
-        }
-
-        this.console.log('DarkBot carregado com sucesso!');
+        const btn = document.createElement('div');
+        btn.className = 'darkbot-toggle-btn';
+        btn.textContent = 'DB';
+        btn.title = 'DarkBot';
+        btn.onclick = () => this.ui.toggle();
+        document.body.appendChild(btn);
     };
 }
 
 const darkBotLoader = setInterval(() => {
-    if ($("#loader").length > 0) return;
-    uw.darkBot = new DarkBot();
+    if (document.getElementById('loader')) return;
+    window.darkBot = new DarkBot();
     clearInterval(darkBotLoader);
 }, 100);

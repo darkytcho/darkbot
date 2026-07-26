@@ -5,7 +5,7 @@ const HEADER = `// ==UserScript==
 // @name         DarkBot
 // @author       DarkBot
 // @description  Bot for Grepolis
-// @version      1.0.0
+// @version      0.1.0-beta
 // @match        http://*.grepolis.com/game/*
 // @match        https://*.grepolis.com/game/*
 // ==/UserScript==
@@ -16,12 +16,12 @@ const SRC_DIR = path.join(__dirname, 'src');
 const DIST_DIR = path.join(__dirname, 'dist');
 const OUTPUT = path.join(DIST_DIR, 'darkbot.user.js');
 
-// Order matters: util first, then storage, console, window, modules, setup last
+// Order matters: util first, then storage, console, UI, modules, setup last
 const FILE_ORDER = [
     'util.js',
     'storage.js',
     'console.js',
-    'window.js',
+    'darkui.js',
     'autoFarm.js',
     'setup.js',
 ];
