@@ -36,7 +36,7 @@ class AutoFarm extends DarkUtil {
     };
 
     updateButtons = () => {
-        const panel = document.getElementById('darkbot-darkbot');
+        const panel = document.getElementById('darkbot-panel');
         if (!panel) return;
 
         panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {

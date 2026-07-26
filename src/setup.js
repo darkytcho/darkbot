@@ -19,6 +19,9 @@ class DarkBot {
         btn.textContent = 'DB';
         btn.title = 'DarkBot';
         btn.id = 'darkbot-toggle';
+        btn.onclick = () => {
+            if (this.ui) this.ui.toggle();
+        };
         document.body.appendChild(btn);
     };
 
