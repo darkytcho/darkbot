@@ -61,15 +61,7 @@ const toggleStyle = `
     }
 `;
 
-const innerScript = `
-    (function () {
-        if (window.opener) {
-            window.close();
-            return;
-        }
-
-        ${modules}
-
+const innerInit = `
         setTimeout(function () {
             window.addEventListener('beforeunload', function () {
                 document.querySelectorAll('.darkbot-toggle-btn, #darkbot-panel, #darkbot-style').forEach(function(el) { el.remove(); });
@@ -78,12 +70,13 @@ const innerScript = `
                 if (window._darkbotObserver) window._darkbotObserver.disconnect();
             });
 
-            const loader = document.getElementById('loader');
+            var loader = document.getElementById('loader');
             if (loader) {
-                const observer = new MutationObserver(function (mutations) {
-                    for (const mutation of mutations) {
-                        for (const node of mutation.removedNodes) {
-                            if (node.id === 'loader') {
+                var observer = new MutationObserver(function (mutations) {
+                    for (var i = 0; i < mutations.length; i++) {
+                        var removed = mutations[i].removedNodes;
+                        for (var j = 0; j < removed.length; j++) {
+                            if (removed[j].id === 'loader') {
                                 observer.disconnect();
                                 window._darkbotObserver = null;
                                 window.darkBot = new DarkBot();
@@ -98,22 +91,31 @@ const innerScript = `
                 window.darkBot = new DarkBot();
             }
         }, 10);
-    })();
 `;
 
-const output = HEADER + `(function () {
-    if (window.opener) {
-        window.close();
-        return;
-    }
+const innerScript =
+    '(function () {\n' +
+    '    if (window.opener) {\n' +
+    '        window.close();\n' +
+    '        return;\n' +
+    '    }\n\n' +
+    modules +
+    innerInit +
+    '})();\n';
 
-    document.head.appendChild(document.createElement('style')).textContent = \`${toggleStyle}\`;
-    window._darkbotStyleEl = document.head.querySelector('style');
-
-    let script = document.head.appendChild(document.createElement('script'));
-    script.textContent = \`${innerScript.replace(/`/g, '\\`')}\`;
-    window._darkbotScript = script;
-})();`;
+const output =
+    HEADER +
+    '(function () {\n' +
+    '    if (window.opener) {\n' +
+    '        window.close();\n' +
+    '        return;\n' +
+    '    }\n\n' +
+    '    document.head.appendChild(document.createElement("style")).textContent = ' + JSON.stringify(toggleStyle) + ';\n' +
+    '    window._darkbotStyleEl = document.head.querySelector("style");\n\n' +
+    '    var script = document.head.appendChild(document.createElement("script"));\n' +
+    '    script.textContent = ' + JSON.stringify(innerScript) + ';\n' +
+    '    window._darkbotScript = script;\n' +
+    '})();\n';
 
 fs.writeFileSync(OUTPUT, output, 'utf8');
 console.log(`\nBuild complete: ${OUTPUT}`);
