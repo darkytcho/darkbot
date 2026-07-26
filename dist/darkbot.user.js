@@ -124,156 +124,179 @@ class DarkUI {
     }
 
     createPanel({ id, title, width = 420, height = 400 }) {
+        const style = document.createElement('style');
+        style.textContent = `
+            #darkbot-panel {
+                position: fixed; top: 80px; left: 80px;
+                width: ${width}px; height: ${height}px;
+                background: #2a1a0e; border: 2px solid #8b6914;
+                border-radius: 8px; z-index: 99999;
+                font-family: Arial, sans-serif; font-size: 13px;
+                color: #fc6; box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+                display: none; flex-direction: column; overflow: hidden;
+            }
+            #darkbot-panel.db-visible { display: flex; }
+
+            #darkbot-panel .db-header {
+                background: #1a0f06; padding: 10px 14px;
+                display: flex; align-items: center; justify-content: space-between;
+                cursor: move; user-select: none;
+                border-bottom: 2px solid #8b6914; flex-shrink: 0;
+            }
+            #darkbot-panel .db-header-title {
+                font-size: 15px; font-weight: 700; color: #d4a017;
+                letter-spacing: 1px;
+            }
+            #darkbot-panel .db-close {
+                background: none; border: none; color: #8b6914;
+                font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+            }
+            #darkbot-panel .db-close:hover { color: #e74c3c; }
+
+            #darkbot-panel .db-tabs {
+                display: flex; background: #1a0f06;
+                border-bottom: 1px solid rgba(139,105,20,0.4); flex-shrink: 0;
+            }
+            #darkbot-panel .db-tab {
+                padding: 8px 16px; cursor: pointer;
+                color: #888; font-size: 11px; font-weight: 700;
+                text-transform: uppercase; letter-spacing: 0.5px;
+                border-bottom: 2px solid transparent; transition: all 0.15s;
+            }
+            #darkbot-panel .db-tab:hover { color: #d4a017; }
+            #darkbot-panel .db-tab.db-tab-active {
+                color: #fc6; border-bottom-color: #d4a017;
+                background: rgba(139,105,20,0.1);
+            }
+
+            #darkbot-panel .db-body {
+                flex: 1; overflow-y: auto; padding: 12px;
+            }
+            #darkbot-panel .db-body::-webkit-scrollbar { width: 6px; }
+            #darkbot-panel .db-body::-webkit-scrollbar-track { background: #1a0f06; }
+            #darkbot-panel .db-body::-webkit-scrollbar-thumb { background: #8b6914; border-radius: 3px; }
+
+            #darkbot-panel .db-section {
+                background: rgba(139,105,20,0.08); border-radius: 6px;
+                padding: 12px; margin-bottom: 10px;
+                border: 1px solid rgba(139,105,20,0.3);
+            }
+            #darkbot-panel .db-section-title {
+                font-size: 13px; font-weight: 700; color: #d4a017;
+                margin-bottom: 8px; padding-bottom: 4px;
+                border-bottom: 1px solid rgba(139,105,20,0.4);
+            }
+            #darkbot-panel .db-row {
+                display: flex; gap: 6px; margin-bottom: 6px;
+                align-items: center; flex-wrap: wrap;
+            }
+            #darkbot-panel .db-label {
+                font-size: 12px; color: #aaa; min-width: 90px; font-weight: 600;
+            }
+
+            #darkbot-panel .db-btn {
+                padding: 4px 10px; border-radius: 3px;
+                border: 1px solid #8b6914; background: #1a1a1a;
+                color: #fc6; cursor: pointer; font-size: 11px;
+                font-weight: 700; transition: all 0.15s; white-space: nowrap;
+            }
+            #darkbot-panel .db-btn:hover {
+                background: #3a2a10; border-color: #d4a017;
+            }
+            #darkbot-panel .db-btn.db-btn-active {
+                background: #4CAF50; border-color: #4CAF50; color: #fff;
+            }
+            #darkbot-panel .db-btn.db-btn-danger {
+                border-color: #c0392b;
+            }
+            #darkbot-panel .db-btn.db-btn-danger:hover {
+                background: #c0392b; color: #fff;
+            }
+
+            #darkbot-panel .db-checkbox {
+                display: flex; align-items: center; gap: 8px;
+                cursor: pointer; padding: 4px 6px; border-radius: 4px;
+                transition: background 0.15s;
+            }
+            #darkbot-panel .db-checkbox:hover {
+                background: rgba(255,255,255,0.08);
+            }
+            #darkbot-panel .db-checkbox-box {
+                width: 16px; height: 16px; border: 2px solid #8b6914;
+                border-radius: 3px; display: flex; align-items: center;
+                justify-content: center; flex-shrink: 0; transition: all 0.15s;
+            }
+            #darkbot-panel .db-checkbox.db-on .db-checkbox-box {
+                background: #4CAF50; border-color: #4CAF50;
+            }
+            #darkbot-panel .db-checkbox-check {
+                color: #fff; font-size: 11px; font-weight: 700;
+                line-height: 1; display: none;
+            }
+            #darkbot-panel .db-checkbox.db-on .db-checkbox-check {
+                display: block;
+            }
+            #darkbot-panel .db-checkbox-label {
+                font-size: 12px; color: #fc6;
+            }
+
+            #darkbot-panel .db-status {
+                font-size: 11px; color: #aaa; padding: 4px 0;
+            }
+            #darkbot-panel .db-status.db-status-on { color: #4CAF50; }
+            #darkbot-panel .db-status.db-status-off { color: #e74c3c; }
+
+            #darkbot-panel .db-console {
+                font-family: Consolas, monospace; font-size: 10px;
+                max-height: 200px; overflow-y: auto;
+            }
+            #darkbot-panel .db-console-line {
+                padding: 2px 0; border-bottom: 1px solid rgba(139,105,20,0.15);
+                color: #aaa;
+            }
+            #darkbot-panel .db-console-line .db-time { color: #666; }
+
+            #darkbot-panel .db-footer {
+                padding: 8px 12px; border-top: 1px solid rgba(139,105,20,0.4);
+                display: flex; justify-content: center; gap: 10px; flex-shrink: 0;
+            }
+            #darkbot-panel .db-footer-btn {
+                cursor: pointer; padding: 6px 16px; border-radius: 4px;
+                font-size: 12px; font-weight: 700; color: #fff;
+                transition: all 0.15s;
+            }
+            #darkbot-panel .db-footer-btn.db-close-btn {
+                background: #8b6914;
+            }
+            #darkbot-panel .db-footer-btn.db-close-btn:hover {
+                background: #a67c1a;
+            }
+        `;
+        document.head.appendChild(style);
+
         this.panel = document.createElement('div');
-        this.panel.id = `darkbot-${id}`;
+        this.panel.id = 'darkbot-panel';
         this.panel.innerHTML = `
-            <style>
-                #darkbot-${id} {
-                    position: fixed; top: 80px; left: 80px;
-                    width: ${width}px; height: ${height}px;
-                    background: #1a1a2e; border: 1px solid #16213e;
-                    border-radius: 8px; z-index: 99999;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    font-size: 12px; color: #e0e0e0;
-                    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-                    display: none; flex-direction: column;
-                    overflow: hidden;
-                }
-                #darkbot-${id}.darkbot-visible { display: flex; }
-
-                #darkbot-${id} .db-header {
-                    background: #0f3460; padding: 10px 14px;
-                    display: flex; align-items: center; justify-content: space-between;
-                    cursor: move; user-select: none;
-                    border-bottom: 2px solid #e94560;
-                    flex-shrink: 0;
-                }
-                #darkbot-${id} .db-header-title {
-                    font-size: 14px; font-weight: 700; color: #fff;
-                    letter-spacing: 1px;
-                }
-                #darkbot-${id} .db-close {
-                    background: none; border: none; color: #999;
-                    font-size: 18px; cursor: pointer; padding: 0 4px;
-                    line-height: 1;
-                }
-                #darkbot-${id} .db-close:hover { color: #e94560; }
-
-                #darkbot-${id} .db-tabs {
-                    display: flex; background: #16213e;
-                    border-bottom: 1px solid #0f3460;
-                    flex-shrink: 0;
-                }
-                #darkbot-${id} .db-tab {
-                    padding: 8px 16px; cursor: pointer;
-                    color: #888; font-size: 11px; font-weight: 600;
-                    text-transform: uppercase; letter-spacing: 0.5px;
-                    border-bottom: 2px solid transparent;
-                    transition: all 0.15s;
-                }
-                #darkbot-${id} .db-tab:hover { color: #ccc; }
-                #darkbot-${id} .db-tab.db-tab-active {
-                    color: #e94560; border-bottom-color: #e94560;
-                }
-
-                #darkbot-${id} .db-body {
-                    flex: 1; overflow-y: auto; padding: 12px;
-                }
-                #darkbot-${id} .db-body::-webkit-scrollbar { width: 6px; }
-                #darkbot-${id} .db-body::-webkit-scrollbar-track { background: #1a1a2e; }
-                #darkbot-${id} .db-body::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 3px; }
-
-                #darkbot-${id} .db-section {
-                    background: #16213e; border-radius: 6px;
-                    padding: 12px; margin-bottom: 10px;
-                    border: 1px solid #1a1a3e;
-                }
-                #darkbot-${id} .db-section-title {
-                    font-size: 12px; font-weight: 700; color: #e94560;
-                    margin-bottom: 8px; text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-                #darkbot-${id} .db-row {
-                    display: flex; gap: 6px; margin-bottom: 6px;
-                    align-items: center; flex-wrap: wrap;
-                }
-                #darkbot-${id} .db-label {
-                    font-size: 11px; color: #999; min-width: 80px;
-                    font-weight: 600;
-                }
-
-                #darkbot-${id} .db-btn {
-                    padding: 5px 12px; border-radius: 4px;
-                    border: 1px solid #333; background: #222;
-                    color: #ccc; cursor: pointer; font-size: 11px;
-                    font-weight: 600; transition: all 0.15s;
-                    white-space: nowrap;
-                }
-                #darkbot-${id} .db-btn:hover { background: #333; border-color: #555; color: #fff; }
-                #darkbot-${id} .db-btn.db-btn-active {
-                    background: #e94560; border-color: #e94560; color: #fff;
-                }
-                #darkbot-${id} .db-btn.db-btn-disabled {
-                    opacity: 0.4; pointer-events: none;
-                }
-
-                #darkbot-${id} .db-toggle {
-                    display: flex; align-items: center; gap: 8px;
-                    cursor: pointer; padding: 6px 0;
-                }
-                #darkbot-${id} .db-toggle-switch {
-                    width: 36px; height: 20px; border-radius: 10px;
-                    background: #333; position: relative; transition: background 0.2s;
-                    flex-shrink: 0;
-                }
-                #darkbot-${id} .db-toggle-switch::after {
-                    content: ''; position: absolute; top: 2px; left: 2px;
-                    width: 16px; height: 16px; border-radius: 50%;
-                    background: #888; transition: all 0.2s;
-                }
-                #darkbot-${id} .db-toggle.db-toggle-on .db-toggle-switch {
-                    background: #e94560;
-                }
-                #darkbot-${id} .db-toggle.db-toggle-on .db-toggle-switch::after {
-                    left: 18px; background: #fff;
-                }
-                #darkbot-${id} .db-toggle-label {
-                    font-size: 11px; color: #ccc; font-weight: 600;
-                }
-
-                #darkbot-${id} .db-status {
-                    font-size: 11px; color: #666; padding: 4px 0;
-                }
-                #darkbot-${id} .db-status.db-status-on { color: #4caf50; }
-                #darkbot-${id} .db-status.db-status-off { color: #e94560; }
-
-                #darkbot-${id} .db-console {
-                    font-family: 'Consolas', monospace; font-size: 10px;
-                    max-height: 200px; overflow-y: auto;
-                }
-                #darkbot-${id} .db-console-line {
-                    padding: 2px 0; border-bottom: 1px solid #1a1a2e;
-                    color: #888;
-                }
-                #darkbot-${id} .db-console-line .db-time { color: #555; }
-            </style>
-
             <div class="db-header">
-                <span class="db-header-title">DARKBOT</span>
+                <span class="db-header-title">${title}</span>
                 <button class="db-close">&times;</button>
             </div>
             <div class="db-tabs"></div>
             <div class="db-body"></div>
+            <div class="db-footer">
+                <div class="db-footer-btn db-close-btn">Fechar</div>
+            </div>
         `;
 
         document.body.appendChild(this.panel);
         this._setupDrag();
         this.panel.querySelector('.db-close').onclick = () => this.hide();
+        this.panel.querySelector('.db-close-btn').onclick = () => this.hide();
         return this;
     }
 
-    addTab({ id, label, render }) {
-        this.tabs.push({ id, label, render });
+    addTab({ id, label, render, afterRender }) {
+        this.tabs.push({ id, label, render, afterRender });
         const tabsEl = this.panel.querySelector('.db-tabs');
         const tab = document.createElement('div');
         tab.className = 'db-tab';
@@ -291,19 +314,19 @@ class DarkUI {
         });
         const tab = this.tabs.find(t => t.id === id);
         if (tab) {
-            this.panel.querySelector('.db-body').innerHTML = '';
+            const body = this.panel.querySelector('.db-body');
+            body.innerHTML = '';
             const content = document.createElement('div');
             content.innerHTML = tab.render();
-            this.panel.querySelector('.db-body').appendChild(content);
+            body.appendChild(content);
             if (tab.afterRender) tab.afterRender();
         }
     }
 
-    show() { this.panel.classList.add('darkbot-visible'); }
-    hide() { this.panel.classList.remove('darkbot-visible'); }
-    toggle() { this.panel.classList.toggle('darkbot-visible'); }
-    isVisible() { return this.panel.classList.contains('darkbot-visible'); }
-
+    show() { this.panel.classList.add('db-visible'); }
+    hide() { this.panel.classList.remove('db-visible'); }
+    toggle() { this.panel.classList.toggle('db-visible'); }
+    isVisible() { return this.panel.classList.contains('db-visible'); }
     refresh() { if (this.activeTab) this._selectTab(this.activeTab); }
 
     _setupDrag() {
@@ -322,7 +345,7 @@ class DarkUI {
         document.onmouseup = () => { this.isDragging = false; };
     }
 
-    /* Helpers para criar HTML de botoes/secoes */
+    /* Static helpers para gerar HTML */
     static section(title, content) {
         return `<div class="db-section"><div class="db-section-title">${title}</div>${content}</div>`;
     }
@@ -335,10 +358,14 @@ class DarkUI {
         return `<div class="db-btn ${active ? 'db-btn-active' : ''}" data-darkbot-btn="${id}">${text}</div>`;
     }
 
-    static toggle(id, label, on = false) {
-        return `<div class="db-toggle ${on ? 'db-toggle-on' : ''}" data-darkbot-toggle="${id}">
-            <div class="db-toggle-switch"></div>
-            <span class="db-toggle-label">${label}</span>
+    static btnDanger(id, text) {
+        return `<div class="db-btn db-btn-danger" data-darkbot-btn="${id}">${text}</div>`;
+    }
+
+    static checkbox(id, label, on = false) {
+        return `<div class="db-checkbox ${on ? 'db-on' : ''}" data-darkbot-check="${id}">
+            <div class="db-checkbox-box"><span class="db-checkbox-check">\u2713</span></div>
+            <span class="db-checkbox-label">${label}</span>
         </div>`;
     }
 
@@ -401,8 +428,8 @@ class AutoFarm extends DarkUtil {
             btn.classList.toggle('db-btn-active', isActive);
         });
 
-        const toggleEl = panel.querySelector('[data-darkbot-toggle="af_toggle"]');
-        if (toggleEl) toggleEl.classList.toggle('db-toggle-on', !!this.active);
+        const toggleEl = panel.querySelector('[data-darkbot-check="af_toggle"]');
+        if (toggleEl) toggleEl.classList.toggle('db-on', !!this.active);
 
         const statusEl = panel.querySelector('#af_status');
         if (statusEl) {
@@ -568,32 +595,32 @@ class AutoFarm extends DarkUtil {
 
     render = () => {
         return DarkUI.section('Auto Farm', `
-            ${DarkUI.toggle('af_toggle', 'Ativar AutoFarm', this.active)}
+            ${DarkUI.checkbox('af_toggle', 'Ativar AutoFarm', this.active)}
             <div id="af_status" class="${this.active ? 'db-status db-status-on' : 'db-status db-status-off'}">
                 ${this.active ? 'Ativo' : 'Inativo'}
             </div>
             <div style="margin-top:6px;">
-                <span class="db-label">Proximo coleta:</span>
-                <span id="af_timer" style="color:#e94560;font-weight:700;">--:--</span>
+                <span class="db-label">Proxima coleta:</span>
+                <span id="af_timer" style="color:#d4a017;font-weight:700;">--:--</span>
             </div>
             ${DarkUI.row('Duracao', `
-                <div class="db-btn ${this.timing === 300000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_5">5 min</div>
-                <div class="db-btn ${this.timing === 600000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_10">10 min</div>
-                <div class="db-btn ${this.timing === 1200000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_20">20 min</div>
+                ${DarkUI.btn('dur_5', '5 min', this.timing === 300000)}
+                ${DarkUI.btn('dur_10', '10 min', this.timing === 600000)}
+                ${DarkUI.btn('dur_20', '20 min', this.timing === 1200000)}
             `)}
             ${DarkUI.row('Armazenamento', `
-                <div class="db-btn ${this.percent === 0.8 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_80">80%</div>
-                <div class="db-btn ${this.percent === 0.9 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_90">90%</div>
-                <div class="db-btn ${this.percent === 1 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_100">100%</div>
+                ${DarkUI.btn('stor_80', '80%', this.percent === 0.8)}
+                ${DarkUI.btn('stor_90', '90%', this.percent === 0.9)}
+                ${DarkUI.btn('stor_100', '100%', this.percent === 1)}
             `)}
         `);
     };
 
     afterRender = () => {
-        const panel = document.getElementById('darkbot-darkbot');
+        const panel = document.getElementById('darkbot-panel');
         if (!panel) return;
 
-        panel.querySelector('[data-darkbot-toggle="af_toggle"]').onclick = () => this.toggle();
+        panel.querySelector('[data-darkbot-check="af_toggle"]').onclick = () => this.toggle();
 
         panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {
             btn.onclick = () => {

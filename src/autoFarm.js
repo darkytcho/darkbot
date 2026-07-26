@@ -51,8 +51,8 @@ class AutoFarm extends DarkUtil {
             btn.classList.toggle('db-btn-active', isActive);
         });
 
-        const toggleEl = panel.querySelector('[data-darkbot-toggle="af_toggle"]');
-        if (toggleEl) toggleEl.classList.toggle('db-toggle-on', !!this.active);
+        const toggleEl = panel.querySelector('[data-darkbot-check="af_toggle"]');
+        if (toggleEl) toggleEl.classList.toggle('db-on', !!this.active);
 
         const statusEl = panel.querySelector('#af_status');
         if (statusEl) {
@@ -218,32 +218,32 @@ class AutoFarm extends DarkUtil {
 
     render = () => {
         return DarkUI.section('Auto Farm', `
-            ${DarkUI.toggle('af_toggle', 'Ativar AutoFarm', this.active)}
+            ${DarkUI.checkbox('af_toggle', 'Ativar AutoFarm', this.active)}
             <div id="af_status" class="${this.active ? 'db-status db-status-on' : 'db-status db-status-off'}">
                 ${this.active ? 'Ativo' : 'Inativo'}
             </div>
             <div style="margin-top:6px;">
-                <span class="db-label">Proximo coleta:</span>
-                <span id="af_timer" style="color:#e94560;font-weight:700;">--:--</span>
+                <span class="db-label">Proxima coleta:</span>
+                <span id="af_timer" style="color:#d4a017;font-weight:700;">--:--</span>
             </div>
             ${DarkUI.row('Duracao', `
-                <div class="db-btn ${this.timing === 300000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_5">5 min</div>
-                <div class="db-btn ${this.timing === 600000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_10">10 min</div>
-                <div class="db-btn ${this.timing === 1200000 ? 'db-btn-active' : ''}" data-darkbot-btn="dur_20">20 min</div>
+                ${DarkUI.btn('dur_5', '5 min', this.timing === 300000)}
+                ${DarkUI.btn('dur_10', '10 min', this.timing === 600000)}
+                ${DarkUI.btn('dur_20', '20 min', this.timing === 1200000)}
             `)}
             ${DarkUI.row('Armazenamento', `
-                <div class="db-btn ${this.percent === 0.8 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_80">80%</div>
-                <div class="db-btn ${this.percent === 0.9 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_90">90%</div>
-                <div class="db-btn ${this.percent === 1 ? 'db-btn-active' : ''}" data-darkbot-btn="stor_100">100%</div>
+                ${DarkUI.btn('stor_80', '80%', this.percent === 0.8)}
+                ${DarkUI.btn('stor_90', '90%', this.percent === 0.9)}
+                ${DarkUI.btn('stor_100', '100%', this.percent === 1)}
             `)}
         `);
     };
 
     afterRender = () => {
-        const panel = document.getElementById('darkbot-darkbot');
+        const panel = document.getElementById('darkbot-panel');
         if (!panel) return;
 
-        panel.querySelector('[data-darkbot-toggle="af_toggle"]').onclick = () => this.toggle();
+        panel.querySelector('[data-darkbot-check="af_toggle"]').onclick = () => this.toggle();
 
         panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {
             btn.onclick = () => {
