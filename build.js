@@ -67,8 +67,16 @@ const innerInit = `
             var uwReady = typeof uw !== 'undefined';
             console.log('[DarkBot] init check — loader:', !!loader, 'uw:', uwReady);
 
+            if (!uwReady) {
+                var candidates = ['uw', 'Grepolis', 'gp', 'gameData', 'GameData', 'ITowns', 'MM'];
+                var found = candidates.filter(function(k) { return typeof window[k] !== 'undefined'; });
+                if (found.length > 0) {
+                    console.log('[DarkBot] found globals:', found.join(', '));
+                }
+            }
+
             if (loader || !uwReady) {
-                setTimeout(_darkbotInit, 500);
+                setTimeout(_darkbotInit, 1000);
                 return;
             }
 
