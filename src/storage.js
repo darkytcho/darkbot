@@ -1,5 +1,6 @@
 class DarkStorage {
     getStorage = () => {
+        if (typeof uw === 'undefined') return {};
         const worldId = uw.Game.world_id;
         const savedValue = localStorage.getItem(`${worldId}_darkBot`);
         let storage = {};
@@ -11,6 +12,7 @@ class DarkStorage {
 
     saveStorage = storage => {
         try {
+            if (typeof uw === 'undefined') return false;
             const worldId = uw.Game.world_id;
             localStorage.setItem(`${worldId}_darkBot`, JSON.stringify(storage));
             return true;

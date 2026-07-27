@@ -62,35 +62,21 @@ const toggleStyle = `
 `;
 
 const innerInit = `
-        setTimeout(function () {
+        (function _darkbotInit() {
+            var loader = document.getElementById('loader');
+            if (loader || typeof uw === 'undefined') {
+                setTimeout(_darkbotInit, 500);
+                return;
+            }
+
             window.addEventListener('beforeunload', function () {
                 document.querySelectorAll('.darkbot-toggle-btn, #darkbot-panel, #darkbot-style').forEach(function(el) { el.remove(); });
                 if (window._darkbotScript) window._darkbotScript.remove();
                 if (window._darkbotStyleEl) window._darkbotStyleEl.remove();
-                if (window._darkbotObserver) window._darkbotObserver.disconnect();
             });
 
-            var loader = document.getElementById('loader');
-            if (loader) {
-                var observer = new MutationObserver(function (mutations) {
-                    for (var i = 0; i < mutations.length; i++) {
-                        var removed = mutations[i].removedNodes;
-                        for (var j = 0; j < removed.length; j++) {
-                            if (removed[j].id === 'loader') {
-                                observer.disconnect();
-                                window._darkbotObserver = null;
-                                window.darkBot = new DarkBot();
-                                return;
-                            }
-                        }
-                    }
-                });
-                observer.observe(loader.parentElement, { childList: true });
-                window._darkbotObserver = observer;
-            } else {
-                window.darkBot = new DarkBot();
-            }
-        }, 10);
+            window.darkBot = new DarkBot();
+        })();
 `;
 
 const innerScript =
