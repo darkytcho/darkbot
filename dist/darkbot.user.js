@@ -2,7 +2,7 @@
 // @name         DarkBot
 // @author       DarkBot
 // @description  Bot for Grepolis
-// @version      0.2.3
+// @version      0.2.4
 // @match        http://*.grepolis.com/game/*
 // @match        https://*.grepolis.com/game/*
 // @run-at       document-idle
