@@ -65,19 +65,33 @@ const innerInit = `
         (function _darkbotInit() {
             var loader = document.getElementById('loader');
             var uwReady = typeof uw !== 'undefined';
-            console.log('[DarkBot] init check — loader:', !!loader, 'uw:', uwReady);
+            var mmReady = typeof MM !== 'undefined';
+            console.log('[DarkBot] init check — loader:', !!loader, 'uw:', uwReady, 'MM:', mmReady);
 
-            if (!uwReady) {
-                var candidates = ['uw', 'Grepolis', 'gp', 'gameData', 'GameData', 'ITowns', 'MM'];
+            if (!uwReady && !mmReady) {
+                var candidates = ['uw', 'MM', 'ITowns', 'GameData', 'Game', 'gpAjax', 'WMap', 'GameDataPremium', 'GameEvents', 'Layout'];
                 var found = candidates.filter(function(k) { return typeof window[k] !== 'undefined'; });
-                if (found.length > 0) {
-                    console.log('[DarkBot] found globals:', found.join(', '));
-                }
+                console.log('[DarkBot] globals:', found.length > 0 ? found.join(', ') : 'NONE');
             }
 
-            if (loader || !uwReady) {
+            if (loader || (!uwReady && !mmReady)) {
                 setTimeout(_darkbotInit, 1000);
                 return;
+            }
+
+            if (!uwReady) {
+                console.log('[DarkBot] uw not found, creating shim...');
+                window.uw = {};
+                if (typeof MM !== 'undefined') window.uw.MM = MM;
+                if (typeof ITowns !== 'undefined') window.uw.ITowns = ITowns;
+                if (typeof GameData !== 'undefined') window.uw.GameData = GameData;
+                if (typeof Game !== 'undefined') window.uw.Game = Game;
+                if (typeof gpAjax !== 'undefined') window.uw.gpAjax = gpAjax;
+                if (typeof WMap !== 'undefined') window.uw.WMap = WMap;
+                if (typeof GameDataPremium !== 'undefined') window.uw.GameDataPremium = GameDataPremium;
+                if (typeof GameEvents !== 'undefined') window.uw.GameEvents = GameEvents;
+                if (typeof Layout !== 'undefined') window.uw.Layout = Layout;
+                console.log('[DarkBot] shim created:', Object.keys(window.uw).join(', '));
             }
 
             console.log('[DarkBot] starting...');
