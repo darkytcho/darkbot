@@ -5,7 +5,7 @@ const HEADER = `// ==UserScript==
 // @name         DarkBot
 // @author       DarkBot
 // @description  Bot for Grepolis
-// @version      0.2.1
+// @version      0.2.2
 // @match        http://*.grepolis.com/game/*
 // @match        https://*.grepolis.com/game/*
 // @run-at       document-idle
@@ -64,11 +64,15 @@ const toggleStyle = `
 const innerInit = `
         (function _darkbotInit() {
             var loader = document.getElementById('loader');
-            if (loader || typeof uw === 'undefined') {
+            var uwReady = typeof uw !== 'undefined';
+            console.log('[DarkBot] init check — loader:', !!loader, 'uw:', uwReady);
+
+            if (loader || !uwReady) {
                 setTimeout(_darkbotInit, 500);
                 return;
             }
 
+            console.log('[DarkBot] starting...');
             window.addEventListener('beforeunload', function () {
                 document.querySelectorAll('.darkbot-toggle-btn, #darkbot-panel, #darkbot-style').forEach(function(el) { el.remove(); });
                 if (window._darkbotScript) window._darkbotScript.remove();
@@ -76,6 +80,7 @@ const innerInit = `
             });
 
             window.darkBot = new DarkBot();
+            console.log('[DarkBot] ready!');
         })();
 `;
 
