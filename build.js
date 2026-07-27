@@ -5,7 +5,7 @@ const HEADER = `// ==UserScript==
 // @name         DarkBot
 // @author       DarkBot
 // @description  Bot for Grepolis
-// @version      0.2.0-beta
+// @version      0.2.1
 // @match        http://*.grepolis.com/game/*
 // @match        https://*.grepolis.com/game/*
 // @run-at       document-idle
