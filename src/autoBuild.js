@@ -289,7 +289,7 @@
     main = async () => {
         if (!this.active) return;
         var now = Date.now();
-        if (now - this.lastBuild < 8000) return;
+        if (now - this.lastBuild < 3000) return;
         if (DarkUtil.isLocked()) return;
         try {
             var towns = Object.keys(uw.ITowns.towns);
@@ -305,10 +305,9 @@
                 try {
                     if (changedCity) {
                         this.console.log('AutoBuild: trocou cidade, aguardando 5s...');
-                        await this.randomDelay(5000, 2000);
-                    } else {
-                        await this.randomDelay(1000, 1500);
+                        await this.randomDelay(5000, 1000);
                     }
+                    await this.randomDelay(1500, 1500);
                     if (action.action === 'build') {
                         await this.buildUp(town_id, action.type);
                     } else {
