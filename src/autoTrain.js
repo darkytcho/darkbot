@@ -275,6 +275,7 @@ class AutoTrain extends DarkUtil {
         var now = Date.now();
         if (now - this.lastTrain < 3000) return;
         if (DarkUtil.isLocked()) return;
+        if (DarkUtil.hasError('frontend_bridge', 'execute', 10000)) return;
         try {
             var towns = Object.keys(uw.ITowns.towns);
             for (var i = 0; i < towns.length; i++) {

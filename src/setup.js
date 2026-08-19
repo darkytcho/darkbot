@@ -2,6 +2,7 @@ class DarkBot {
     constructor() {
         this.console = new DarkConsole();
         this.storage = new DarkStorage();
+        DarkUtil.installInterceptor(this.console);
         this.autoFarm = new AutoFarm(this.console, this.storage);
         this.autoBuild = new AutoBuild(this.console, this.storage);
         this.autoTrain = new AutoTrain(this.console, this.storage);
