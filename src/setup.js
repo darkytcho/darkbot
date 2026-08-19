@@ -4,11 +4,13 @@ class DarkBot {
         this.storage = new DarkStorage();
         this.autoFarm = new AutoFarm(this.console, this.storage);
         this.autoBuild = new AutoBuild(this.console, this.storage);
+        this.autoTrain = new AutoTrain(this.console, this.storage);
 
         this.ui = new DarkUI();
         this.ui.createPanel({ id: 'darkbot', title: 'DARKBOT', width: 420, height: 420 });
         this.ui.addTab({ id: 'farm', label: 'Farm', render: () => this.autoFarm.render(), afterRender: () => this.autoFarm.afterRender() });
         this.ui.addTab({ id: 'build', label: 'Build', render: () => this.autoBuild.render(), afterRender: () => this.autoBuild.afterRender() });
+        this.ui.addTab({ id: 'train', label: 'Train', render: () => this.autoTrain.render(), afterRender: () => this.autoTrain.afterRender() });
         this.ui.addTab({ id: 'console', label: 'Console', render: () => this.console.renderSettings(), afterRender: () => this.console.startLiveUpdate() });
 
         this.createToggleButton();

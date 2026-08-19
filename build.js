@@ -24,6 +24,7 @@ const FILE_ORDER = [
     'darkui.js',
     'autoFarm.js',
     'autoBuild.js',
+    'autoTrain.js',
     'setup.js',
 ];
 
