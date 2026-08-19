@@ -151,7 +151,7 @@
             return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(139,105,20,0.15);">' +
                 '<span style="flex:1;font-size:11px;color:#aaa;">' + label + '</span>' +
                 '<span style="font-size:11px;color:#fc6;min-width:24px;text-align:center;" data-ab-level="' + name + '">' + level + '</span>' +
-                '<input type="number" min="0" max="35" value="' + target + '" data-ab-input="' + name + '" ' +
+                '<input type="number" min="0" max="50" value="' + target + '" data-ab-input="' + name + '" ' +
                     'style="width:42px;background:#1a0f06;border:1px solid #8b6914;border-radius:3px;color:#d4a017;text-align:center;font-size:11px;padding:2px 3px;">' +
                 '</div>';
         }).join('');
@@ -352,7 +352,7 @@
             input.onchange = function() {
                 var val = parseInt(input.value, 10);
                 if (isNaN(val) || val < 0) val = 0;
-                if (val > 35) val = 35;
+                if (val > 50) val = 50;
                 self.setTarget(building, val);
             };
         });
