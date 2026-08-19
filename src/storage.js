@@ -1,22 +1,31 @@
 class DarkStorage {
+    getWorldId = () => {
+        try {
+            if (typeof uw !== 'undefined' && uw.Game && uw.Game.world_id) return uw.Game.world_id;
+        } catch (e) {}
+        try {
+            var m = window.location.pathname.match(/\/(\d+)_\w+\//);
+            if (m) return m[1];
+        } catch (e) {}
+        return 'default';
+    };
+
     getStorage = () => {
-        if (typeof uw === 'undefined') return {};
-        const worldId = uw.Game.world_id;
-        const savedValue = localStorage.getItem(`${worldId}_darkBot`);
-        let storage = {};
+        var worldId = this.getWorldId();
+        var savedValue = localStorage.getItem(worldId + '_darkBot');
+        var storage = {};
         if (savedValue !== null && savedValue !== undefined) {
-            try { storage = JSON.parse(savedValue); } catch (e) { console.error(`DarkBot storage parse error: ${e}`); }
+            try { storage = JSON.parse(savedValue); } catch (e) {}
         }
         return storage;
     };
 
     saveStorage = storage => {
         try {
-            if (typeof uw === 'undefined') return false;
-            const worldId = uw.Game.world_id;
-            localStorage.setItem(`${worldId}_darkBot`, JSON.stringify(storage));
+            var worldId = this.getWorldId();
+            localStorage.setItem(worldId + '_darkBot', JSON.stringify(storage));
             return true;
-        } catch (e) { console.error(`DarkBot storage save error: ${e}`); return false; }
+        } catch (e) { return false; }
     };
 
     save = (key, content) => {

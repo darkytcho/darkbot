@@ -82,11 +82,14 @@
     };
 
     getTowns = () => {
-        const towns = uw.ITowns.towns;
-        return Object.keys(towns).map(id => ({
-            id,
-            name: towns[id].attributes.name || ('Cidade ' + id)
-        }));
+        try {
+            const towns = uw.ITowns.towns;
+            if (!towns) return [];
+            return Object.keys(towns).map(id => ({
+                id,
+                name: (towns[id] && towns[id].attributes && towns[id].attributes.name) || ('Cidade ' + id)
+            }));
+        } catch (e) { return []; }
     };
 
     getTargets = () => {
@@ -156,37 +159,43 @@
     };
 
     getTownBuildings = (town_id) => {
-        const town = uw.ITowns.getTown(town_id);
-        if (!town) return null;
-        const buildings = Object.assign({}, town.getBuildings().attributes);
-        for (const order of town.buildingOrders().models) {
-            const type = order.attributes.building_type;
-            if (order.attributes.tear_down) {
-                buildings[type] = (buildings[type] || 0) - 1;
-            } else {
-                buildings[type] = (buildings[type] || 0) + 1;
+        try {
+            var town = uw.ITowns.getTown(town_id);
+            if (!town) return null;
+            var buildings = Object.assign({}, town.getBuildings().attributes);
+            var orders = town.buildingOrders();
+            for (var i = 0; i < orders.length; i++) {
+                var order = orders.models ? orders.models[i] : orders[i];
+                if (!order) continue;
+                var type = order.attributes.building_type;
+                if (order.attributes.tear_down) {
+                    buildings[type] = (buildings[type] || 0) - 1;
+                } else {
+                    buildings[type] = (buildings[type] || 0) + 1;
+                }
             }
-        }
-        return buildings;
+            return buildings;
+        } catch (e) { return null; }
     };
 
     getTownGroupId = (town_id) => {
         try {
-            const tg = uw.ITowns.getTownGroups();
+            var tg = uw.ITowns.getTownGroups();
             if (tg) {
-                for (const key of Object.keys(tg)) {
-                    const g = tg[key];
+                var keys = Object.keys(tg);
+                for (var i = 0; i < keys.length; i++) {
+                    var g = tg[keys[i]];
                     if (!g || !g.towns) continue;
                     if (g.towns[town_id] || g.towns[String(town_id)]) return 'gp_' + g.id;
                 }
             }
         } catch (e) {}
         try {
-            const collection = uw.MM.getCollections().TownGroupTown[0];
-            if (collection) {
-                const models = collection.models || [];
-                for (const m of models) {
-                    const attrs = m.attributes || m;
+            var collection = uw.MM.getCollections().TownGroupTown;
+            if (collection && collection[0]) {
+                var models = collection[0].models || [];
+                for (var j = 0; j < models.length; j++) {
+                    var attrs = models[j].attributes || models[j];
                     if (String(attrs.town_id) === String(town_id)) {
                         return 'gp_' + attrs.group_id;
                     }
@@ -202,26 +211,26 @@
     };
 
     isQueueFull = (town_id) => {
-        const town = uw.ITowns.getTown(town_id);
-        if (!town) return true;
-        let max = 2;
         try {
-            if (uw.GameDataPremium && uw.GameDataPremium.isAdvisorActivated('curator')) max = 7;
-        } catch (e) {}
-        return town.buildingOrders().length >= max;
+            var town = uw.ITowns.getTown(town_id);
+            if (!town) return true;
+            var max = 2;
+            if (typeof uw.GameDataPremium !== 'undefined' && uw.GameDataPremium.isAdvisorActivated('curator')) max = 7;
+            return town.buildingOrders().length >= max;
+        } catch (e) { return true; }
     };
 
     canAfford = (town_id, type) => {
-        const town = uw.ITowns.getTown(town_id);
-        if (!town) return false;
         try {
-            const buildData = uw.MM.getModels().BuildingBuildData[town_id];
+            var town = uw.ITowns.getTown(town_id);
+            if (!town) return false;
+            var buildData = uw.MM.getModels().BuildingBuildData[town_id];
             if (!buildData) return false;
-            const costs = buildData.attributes.building_data[type];
+            var costs = buildData.attributes.building_data[type];
             if (!costs) return false;
-            const res = town.resources();
-            const rf = costs.resources_for;
-            const pf = costs.population_for;
+            var res = town.resources();
+            var rf = costs.resources_for;
+            var pf = costs.population_for;
             if (town.getAvailablePopulation() < pf) return false;
             if (res.wood < rf.wood + this.margin) return false;
             if (res.stone < rf.stone + this.margin) return false;
