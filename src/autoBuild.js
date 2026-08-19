@@ -20,6 +20,7 @@
         this.margin = 20;
         this.interval = null;
         this.lastBuild = 0;
+        this.lastTown = null;
         if (this.active) this.start();
     }
 
@@ -246,7 +247,7 @@
             town_id: town_id,
         });
         this.console.log('AutoBuild: +1 ' + type + ' (cidade ' + town_id + ')');
-        await this.sleep(Math.random() * 1500 + 1000);
+        await this.randomDelay(2000, 2000);
     };
 
     tearDown = async (town_id, type) => {
@@ -257,7 +258,7 @@
             town_id: town_id,
         });
         this.console.log('AutoBuild: demolir ' + type + ' (cidade ' + town_id + ')');
-        await this.sleep(Math.random() * 1500 + 1000);
+        await this.randomDelay(2000, 2000);
     };
 
     findNextAction = (town_id) => {
@@ -298,15 +299,21 @@
                 var action = this.findNextAction(town_id);
                 if (!action) continue;
                 if (!DarkUtil.acquireLock('autobuild')) return;
+                var changedCity = this.lastTown !== null && this.lastTown !== town_id;
+                this.lastTown = town_id;
                 this.lastBuild = Date.now();
                 try {
-                    await this.randomDelay(2000, 3000);
+                    if (changedCity) {
+                        this.console.log('AutoBuild: trocou cidade, aguardando 5s...');
+                        await this.randomDelay(5000, 2000);
+                    } else {
+                        await this.randomDelay(1000, 1500);
+                    }
                     if (action.action === 'build') {
                         await this.buildUp(town_id, action.type);
                     } else {
                         await this.tearDown(town_id, action.type);
                     }
-                    await this.randomDelay(3000, 5000);
                 } finally {
                     DarkUtil.releaseLock('autobuild');
                 }
