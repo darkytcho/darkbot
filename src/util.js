@@ -17,9 +17,20 @@ class DarkUtil {
         return DarkUtil._lock !== null;
     }
 
+    static _console = null;
+
     static installInterceptor(console) {
-        if (!uw.gpAjax || uw.gpAjax._dbIntercepted) return;
+        DarkUtil._console = console;
+        DarkUtil._tryInstall();
+    }
+
+    static _tryInstall() {
+        if (!DarkUtil._console) return;
+        if (!uw.gpAjax) return;
+        if (uw.gpAjax._dbIntercepted) return;
+        var console = DarkUtil._console;
         var origPost = uw.gpAjax.ajaxPost;
+        var origGet = uw.gpAjax.ajaxGet;
         uw.gpAjax.ajaxPost = function(controller, action, data, skip, callback) {
             var wrappedCallback = function(response) {
                 DarkUtil._lastResponse = { controller: controller, action: action, response: response, at: Date.now() };
@@ -30,12 +41,13 @@ class DarkUtil {
                 } else if (response && response.json && response.json.error) {
                     DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
                     console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
+                } else if (response && response.json && response.json.success) {
+                    DarkUtil._lastError = null;
                 }
                 if (typeof callback === 'function') callback(response);
             };
             return origPost.call(uw.gpAjax, controller, action, data, skip, wrappedCallback);
         };
-        var origGet = uw.gpAjax.ajaxGet;
         uw.gpAjax.ajaxGet = function(controller, action, data, skip, callback) {
             var wrappedCallback = function(response) {
                 DarkUtil._lastResponse = { controller: controller, action: action, response: response, at: Date.now() };
@@ -46,6 +58,8 @@ class DarkUtil {
                 } else if (response && response.json && response.json.error) {
                     DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
                     console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
+                } else if (response && response.json && response.json.success) {
+                    DarkUtil._lastError = null;
                 }
                 if (typeof callback === 'function') callback(response);
             };
@@ -56,6 +70,7 @@ class DarkUtil {
     }
 
     static hasError(controller, action, withinMs) {
+        DarkUtil._tryInstall();
         if (!DarkUtil._lastError) return false;
         if (DarkUtil._lastError.controller !== controller) return false;
         if (DarkUtil._lastError.action !== action) return false;
