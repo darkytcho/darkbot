@@ -114,8 +114,8 @@
         if (!panel) return;
         const targets = this.getTargets();
         const target = targets[building] || 0;
-        const el = panel.querySelector('[data-ab-target="' + building + '"]');
-        if (el) el.textContent = target > 0 ? '-> ' + target : '--';
+        const el = panel.querySelector('[data-ab-input="' + building + '"]');
+        if (el) el.value = target;
     };
 
     updateToggleUI = () => {
@@ -151,9 +151,8 @@
             return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(139,105,20,0.15);">' +
                 '<span style="flex:1;font-size:11px;color:#aaa;">' + label + '</span>' +
                 '<span style="font-size:11px;color:#fc6;min-width:24px;text-align:center;" data-ab-level="' + name + '">' + level + '</span>' +
-                '<span style="font-size:10px;color:#d4a017;min-width:40px;text-align:center;" data-ab-target="' + name + '">' + (target > 0 ? '-> ' + target : '--') + '</span>' +
-                '<div class="db-btn" data-darkbot-btn="ab_lvl_' + name + '_dec" style="padding:2px 6px;font-size:10px;">-</div>' +
-                '<div class="db-btn" data-darkbot-btn="ab_lvl_' + name + '_inc" style="padding:2px 6px;font-size:10px;">+</div>' +
+                '<input type="number" min="0" max="35" value="' + target + '" data-ab-input="' + name + '" ' +
+                    'style="width:42px;background:#1a0f06;border:1px solid #8b6914;border-radius:3px;color:#d4a017;text-align:center;font-size:11px;padding:2px 3px;">' +
                 '</div>';
         }).join('');
     };
@@ -348,20 +347,13 @@
         var panel = document.getElementById('darkbot-panel');
         if (!panel) return;
         var self = this;
-        panel.querySelectorAll('[data-darkbot-btn^="ab_lvl_"]').forEach(function(btn) {
-            btn.onclick = function() {
-                var id = btn.dataset.darkbotBtn;
-                var match = id.match(/^ab_lvl_(.+)_(inc|dec)$/);
-                if (!match) return;
-                var building = match[1];
-                var action = match[2];
-                var targets = self.getTargets();
-                var current = targets[building] || 0;
-                if (action === 'inc') {
-                    self.setTarget(building, current + 1);
-                } else {
-                    self.setTarget(building, Math.max(0, current - 1));
-                }
+        panel.querySelectorAll('[data-ab-input]').forEach(function(input) {
+            var building = input.dataset.abInput;
+            input.onchange = function() {
+                var val = parseInt(input.value, 10);
+                if (isNaN(val) || val < 0) val = 0;
+                if (val > 35) val = 35;
+                self.setTarget(building, val);
             };
         });
     };
