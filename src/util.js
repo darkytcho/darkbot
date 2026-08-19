@@ -34,15 +34,34 @@ class DarkUtil {
         uw.gpAjax.ajaxPost = function(controller, action, data, skip, callback) {
             var wrappedCallback = function(response) {
                 DarkUtil._lastResponse = { controller: controller, action: action, response: response, at: Date.now() };
+                var found = false;
                 if (response && response.errors && response.errors.length > 0) {
                     var msgs = response.errors.map(function(e) { return e.message || e; });
                     DarkUtil._lastError = { controller: controller, action: action, messages: msgs, at: Date.now() };
                     console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs.join(', '));
-                } else if (response && response.json && response.json.error) {
-                    DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
-                    console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
-                } else if (response && response.json && response.json.success) {
-                    DarkUtil._lastError = null;
+                    found = true;
+                }
+                if (response && response.json) {
+                    if (response.json.errors && response.json.errors.length > 0) {
+                        var msgs2 = response.json.errors.map(function(e) { return e.message || e; });
+                        DarkUtil._lastError = { controller: controller, action: action, messages: msgs2, at: Date.now() };
+                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs2.join(', '));
+                        found = true;
+                    }
+                    if (response.json.error) {
+                        DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
+                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
+                        found = true;
+                    }
+                    if (response.json.success === false && !found) {
+                        console.log('[API WARN] ' + controller + '/' + action + ': success=false (resposta: ' + JSON.stringify(response.json).substring(0, 300) + ')');
+                    }
+                    if (response.json.success === true) {
+                        DarkUtil._lastError = null;
+                    }
+                }
+                if (!found && response && typeof console !== 'undefined') {
+                    console.log('[API RES] ' + controller + '/' + action + ': ' + JSON.stringify(response).substring(0, 300));
                 }
                 if (typeof callback === 'function') callback(response);
             };
@@ -51,15 +70,28 @@ class DarkUtil {
         uw.gpAjax.ajaxGet = function(controller, action, data, skip, callback) {
             var wrappedCallback = function(response) {
                 DarkUtil._lastResponse = { controller: controller, action: action, response: response, at: Date.now() };
+                var found = false;
                 if (response && response.errors && response.errors.length > 0) {
                     var msgs = response.errors.map(function(e) { return e.message || e; });
                     DarkUtil._lastError = { controller: controller, action: action, messages: msgs, at: Date.now() };
                     console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs.join(', '));
-                } else if (response && response.json && response.json.error) {
-                    DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
-                    console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
-                } else if (response && response.json && response.json.success) {
-                    DarkUtil._lastError = null;
+                    found = true;
+                }
+                if (response && response.json) {
+                    if (response.json.errors && response.json.errors.length > 0) {
+                        var msgs2 = response.json.errors.map(function(e) { return e.message || e; });
+                        DarkUtil._lastError = { controller: controller, action: action, messages: msgs2, at: Date.now() };
+                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs2.join(', '));
+                        found = true;
+                    }
+                    if (response.json.error) {
+                        DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
+                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
+                        found = true;
+                    }
+                    if (response.json.success === true) {
+                        DarkUtil._lastError = null;
+                    }
                 }
                 if (typeof callback === 'function') callback(response);
             };
