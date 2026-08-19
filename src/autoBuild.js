@@ -248,7 +248,6 @@
             town_id: town_id,
         });
         this.console.log('AutoBuild: +1 ' + type + ' (cidade ' + town_id + ')');
-        await this.randomDelay(2000, 1000);
     };
 
     tearDown = async (town_id, type) => {
@@ -259,7 +258,6 @@
             town_id: town_id,
         });
         this.console.log('AutoBuild: demolir ' + type + ' (cidade ' + town_id + ')');
-        await this.randomDelay(2000, 1000);
     };
 
     markFailed = (town_id, action, type) => {
@@ -307,9 +305,9 @@
     main = async () => {
         if (!this.active) return;
         var now = Date.now();
-        if (now - this.lastBuild < 3000) return;
+        if (now - this.lastBuild < 1000) return;
         if (DarkUtil.isLocked()) return;
-        if (DarkUtil.hasError('frontend_bridge', 'execute', 10000)) return;
+        if (DarkUtil.hasError('frontend_bridge', 'execute', 3000)) return;
         try {
             var towns = Object.keys(uw.ITowns.towns);
             for (var i = 0; i < towns.length; i++) {
@@ -333,7 +331,6 @@
                     } else {
                         await this.tearDown(town_id, action.type);
                     }
-                    await this.randomDelay(2000, 1000);
                     if (DarkUtil._lastError) {
                         this.markFailed(town_id, action.action, action.type);
                         this.console.log('AutoBuild: ignorando ' + action.type + ' por 5min');
