@@ -136,7 +136,7 @@ class AutoFarm extends DarkUtil {
                     if (relation.attributes.relation_status !== 1) continue;
                     if (relation.attributes.lootable_at !== null && now < relation.attributes.lootable_at) continue;
                     this.claimSingle(town_id, relation.attributes.farm_town_id, relation.id, Math.ceil(this.timing / 600_000));
-                    await this.sleep(500);
+                    await this.randomDelay(500, 1500);
                     if (!max) return;
                     else max -= 1;
                 }
@@ -151,9 +151,17 @@ class AutoFarm extends DarkUtil {
             this.timer = next_collection + Math.floor(Math.random() * 20_000) + 10_000;
         }
         if (this.timer < 1) {
+            if (DarkUtil.isLocked()) { this.updateTimer(); return; }
+            if (!DarkUtil.acquireLock('autofarm')) { this.updateTimer(); return; }
             clearInterval(this.active);
             this.active = null;
-            await this.claim();
+            try {
+                await this.randomDelay(1500, 2500);
+                await this.claim();
+                await this.randomDelay(4000, 6000);
+            } finally {
+                DarkUtil.releaseLock('autofarm');
+            }
             this.active = setInterval(this.main, 1000);
             const rand = Math.floor(Math.random() * 20_000) + 10_000;
             this.timer = this.timing + rand;

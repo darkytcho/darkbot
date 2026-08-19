@@ -1,4 +1,20 @@
 class DarkUtil {
+    static _lock = null;
+
+    static acquireLock(owner) {
+        if (DarkUtil._lock) return false;
+        DarkUtil._lock = { owner: owner, at: Date.now() };
+        return true;
+    }
+
+    static releaseLock(owner) {
+        if (DarkUtil._lock && DarkUtil._lock.owner === owner) DarkUtil._lock = null;
+    }
+
+    static isLocked() {
+        return DarkUtil._lock !== null;
+    }
+
     constructor(console, storage) {
         this.console = console;
         this.storage = storage;
@@ -13,6 +29,10 @@ class DarkUtil {
         let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
         num = num * stdDev + mean;
         return new Promise(resolve => setTimeout(resolve, num));
+    };
+
+    randomDelay = (base, jitter) => {
+        return this.sleep(base + Math.random() * jitter);
     };
 
     generateIslandList = () => {

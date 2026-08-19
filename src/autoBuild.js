@@ -288,7 +288,8 @@
     main = async () => {
         if (!this.active) return;
         var now = Date.now();
-        if (now - this.lastBuild < 5000) return;
+        if (now - this.lastBuild < 8000) return;
+        if (DarkUtil.isLocked()) return;
         try {
             var towns = Object.keys(uw.ITowns.towns);
             for (var i = 0; i < towns.length; i++) {
@@ -296,15 +297,23 @@
                 if (this.isQueueFull(town_id)) continue;
                 var action = this.findNextAction(town_id);
                 if (!action) continue;
+                if (!DarkUtil.acquireLock('autobuild')) return;
                 this.lastBuild = Date.now();
-                if (action.action === 'build') {
-                    await this.buildUp(town_id, action.type);
-                } else {
-                    await this.tearDown(town_id, action.type);
+                try {
+                    await this.randomDelay(2000, 3000);
+                    if (action.action === 'build') {
+                        await this.buildUp(town_id, action.type);
+                    } else {
+                        await this.tearDown(town_id, action.type);
+                    }
+                    await this.randomDelay(3000, 5000);
+                } finally {
+                    DarkUtil.releaseLock('autobuild');
                 }
                 return;
             }
         } catch (e) {
+            DarkUtil.releaseLock('autobuild');
             this.console.log('AutoBuild erro: ' + e.message);
         }
     };
