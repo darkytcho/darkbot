@@ -25,7 +25,7 @@
     }
 
     start = () => {
-        this.interval = setInterval(this.main, 20000);
+        this.interval = setInterval(this.main, 3000);
         this.main();
     };
 
