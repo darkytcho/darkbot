@@ -324,7 +324,7 @@
                         this.console.log('AutoBuild: trocou cidade, aguardando 3s...');
                         await this.randomDelay(3000, 1000);
                     }
-                    await this.randomDelay(2000, 1000);
+                    await this.randomDelay(1000, 1000);
                     DarkUtil._lastError = null;
                     if (action.action === 'build') {
                         await this.buildUp(town_id, action.type);
