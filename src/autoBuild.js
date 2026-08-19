@@ -21,6 +21,7 @@
         this.interval = null;
         this.lastBuild = 0;
         this.lastTown = null;
+        this.failedActions = {};
         if (this.active) this.start();
     }
 
@@ -261,6 +262,21 @@
         await this.randomDelay(2000, 2000);
     };
 
+    markFailed = (town_id, action, type) => {
+        this.failedActions[town_id + '_' + action + '_' + type] = Date.now();
+    };
+
+    isFailed = (town_id, action, type) => {
+        var key = town_id + '_' + action + '_' + type;
+        var ts = this.failedActions[key];
+        if (!ts) return false;
+        if (Date.now() - ts > 300000) {
+            delete this.failedActions[key];
+            return false;
+        }
+        return true;
+    };
+
     findNextAction = (town_id) => {
         const buildings = this.getTownBuildings(town_id);
         if (!buildings) return null;
@@ -270,6 +286,7 @@
             if (target === undefined) continue;
             const current = buildings[type] || 0;
             if (current < target && this.canAfford(town_id, type)) {
+                if (this.isFailed(town_id, 'build', type)) continue;
                 return { action: 'build', type: type };
             }
         }
@@ -279,6 +296,7 @@
                 if (target === undefined) continue;
                 const current = buildings[type] || 0;
                 if (current > target) {
+                    if (this.isFailed(town_id, 'demolish', type)) continue;
                     return { action: 'demolish', type: type };
                 }
             }
@@ -309,10 +327,16 @@
                         await this.randomDelay(5000, 1000);
                     }
                     await this.randomDelay(1500, 1500);
+                    DarkUtil._lastError = null;
                     if (action.action === 'build') {
                         await this.buildUp(town_id, action.type);
                     } else {
                         await this.tearDown(town_id, action.type);
+                    }
+                    await this.randomDelay(1500, 1500);
+                    if (DarkUtil._lastError) {
+                        this.markFailed(town_id, action.action, action.type);
+                        this.console.log('AutoBuild: ignorando ' + action.type + ' por 5min');
                     }
                 } finally {
                     DarkUtil.releaseLock('autobuild');
