@@ -1,14 +1,22 @@
-class AutoBuild extends DarkUtil {
+﻿class AutoBuild extends DarkUtil {
     constructor(c, s) {
         super(c, s);
         this.active = this.storage.load('ab_active', false);
         this.groupTargets = this.storage.load('ab_group_targets', { 'default': {} });
         this.selectedGroup = 'default';
+        this.selectedTown = null;
         this.demolish = this.storage.load('ab_demolish', false);
         this.priority = [
             'farm', 'main', 'storage', 'lumber', 'stoner', 'ironer',
             'barracks', 'academy', 'temple', 'market', 'wall', 'hide', 'docks'
         ];
+        this.buildingNames = {
+            main: 'Ed. Principal', farm: 'Fazenda', storage: 'Deposito',
+            lumber: 'Bosque', stoner: 'Pedreira', ironer: 'Ferreira',
+            barracks: 'Quartel', academy: 'Academia', temple: 'Templo',
+            market: 'Mercado', wall: 'Muralha', hide: 'Esconderijo',
+            docks: 'Docas'
+        };
         this.margin = 20;
         this.interval = null;
         this.lastBuild = 0;
@@ -46,19 +54,39 @@ class AutoBuild extends DarkUtil {
     };
 
     getGroups = () => {
-        const groups = [{ id: 'default', name: 'Padrao' }];
+        const groups = [{ id: 'default', name: 'Padrao', townIds: [] }];
         try {
-            if (typeof uw !== 'undefined' && uw.ITowns && uw.ITowns.townGroups) {
-                const models = uw.ITowns.townGroups.models || uw.ITowns.townGroups;
-                if (models && models.length) {
-                    for (const model of models) {
-                        const attrs = model.attributes || model;
-                        groups.push({ id: 'gp_' + attrs.id, name: attrs.name || ('Grupo ' + attrs.id) });
-                    }
+            const tg = uw.ITowns.getTownGroups();
+            if (tg) {
+                for (const key of Object.keys(tg)) {
+                    const g = tg[key];
+                    if (!g || g.id <= 0 || g.id === -1) continue;
+                    const townIds = g.towns ? Object.keys(g.towns).map(Number) : [];
+                    groups.push({ id: 'gp_' + g.id, name: g.name, townIds });
                 }
             }
         } catch (e) {}
+        if (groups.length === 1) {
+            try {
+                const collection = uw.MM.getCollections().TownGroup[0];
+                if (collection && collection.forEach) {
+                    collection.forEach((group) => {
+                        const gid = group.getId();
+                        if (gid <= 0 || gid === -1) return;
+                        groups.push({ id: 'gp_' + gid, name: group.getName(), townIds: [] });
+                    });
+                }
+            } catch (e) {}
+        }
         return groups;
+    };
+
+    getTowns = () => {
+        const towns = uw.ITowns.towns;
+        return Object.keys(towns).map(id => ({
+            id,
+            name: towns[id].attributes.name || ('Cidade ' + id)
+        }));
     };
 
     getTargets = () => {
@@ -83,7 +111,7 @@ class AutoBuild extends DarkUtil {
         if (!panel) return;
         const targets = this.getTargets();
         const target = targets[building] || 0;
-        const el = panel.querySelector(`[data-ab-target="${building}"]`);
+        const el = panel.querySelector('[data-ab-target="' + building + '"]');
         if (el) el.textContent = target > 0 ? '-> ' + target : '--';
     };
 
@@ -107,37 +135,30 @@ class AutoBuild extends DarkUtil {
         const container = panel.querySelector('#ab_building_list');
         if (!container) return;
         const targets = this.getTargets();
-        container.innerHTML = this.buildBuildingListHTML(targets);
+        const buildings = this.selectedTown ? this.getTownBuildings(this.selectedTown) : null;
+        container.innerHTML = this.buildBuildingListHTML(targets, buildings);
+        this.afterRenderButtons();
     };
 
-    buildBuildingListHTML = (targets) => {
-        const buildingNames = {
-            main: 'Ed. Principal', farm: 'Fazenda', storage: 'Deposito',
-            lumber: 'Bosque', stoner: 'Pedreira', ironer: 'Ferreira',
-            barracks: 'Quartel', academy: 'Academia', temple: 'Templo',
-            market: 'Mercado', wall: 'Muralha', hide: 'Esconderijo',
-            docks: 'Docas'
-        };
+    buildBuildingListHTML = (targets, buildings) => {
         return this.priority.map(name => {
-            const { avg } = this.getBuildingDisplay(name);
+            const level = buildings ? (buildings[name] || 0) : '--';
             const target = targets[name] || 0;
-            const label = buildingNames[name] || name;
-            return `
-                <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(139,105,20,0.15);">
-                    <span style="flex:1;font-size:11px;color:#aaa;">${label}</span>
-                    <span style="font-size:11px;color:#666;min-width:24px;text-align:center;">${avg}</span>
-                    <span style="font-size:10px;color:#d4a017;min-width:40px;text-align:center;" data-ab-target="${name}">${target > 0 ? '-> ' + target : '--'}</span>
-                    <div class="db-btn" data-darkbot-btn="ab_lvl_${name}_dec" style="padding:2px 6px;font-size:10px;">-</div>
-                    <div class="db-btn" data-darkbot-btn="ab_lvl_${name}_inc" style="padding:2px 6px;font-size:10px;">+</div>
-                </div>
-            `;
+            const label = this.buildingNames[name] || name;
+            return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(139,105,20,0.15);">' +
+                '<span style="flex:1;font-size:11px;color:#aaa;">' + label + '</span>' +
+                '<span style="font-size:11px;color:#fc6;min-width:24px;text-align:center;" data-ab-level="' + name + '">' + level + '</span>' +
+                '<span style="font-size:10px;color:#d4a017;min-width:40px;text-align:center;" data-ab-target="' + name + '">' + (target > 0 ? '-> ' + target : '--') + '</span>' +
+                '<div class="db-btn" data-darkbot-btn="ab_lvl_' + name + '_dec" style="padding:2px 6px;font-size:10px;">-</div>' +
+                '<div class="db-btn" data-darkbot-btn="ab_lvl_' + name + '_inc" style="padding:2px 6px;font-size:10px;">+</div>' +
+                '</div>';
         }).join('');
     };
 
     getTownBuildings = (town_id) => {
         const town = uw.ITowns.getTown(town_id);
         if (!town) return null;
-        const buildings = { ...town.getBuildings().attributes };
+        const buildings = Object.assign({}, town.getBuildings().attributes);
         for (const order of town.buildingOrders().models) {
             const type = order.attributes.building_type;
             if (order.attributes.tear_down) {
@@ -149,13 +170,25 @@ class AutoBuild extends DarkUtil {
         return buildings;
     };
 
-    getTownGroup = (town_id) => {
+    getTownGroupId = (town_id) => {
         try {
-            if (uw.ITowns.townGroups && uw.ITowns.townGroups.models) {
-                for (const model of uw.ITowns.townGroups.models) {
-                    const townIds = model.attributes.town_ids || [];
-                    if (townIds.includes(Number(town_id))) {
-                        return 'gp_' + model.attributes.id;
+            const tg = uw.ITowns.getTownGroups();
+            if (tg) {
+                for (const key of Object.keys(tg)) {
+                    const g = tg[key];
+                    if (!g || !g.towns) continue;
+                    if (g.towns[town_id] || g.towns[String(town_id)]) return 'gp_' + g.id;
+                }
+            }
+        } catch (e) {}
+        try {
+            const collection = uw.MM.getCollections().TownGroupTown[0];
+            if (collection) {
+                const models = collection.models || [];
+                for (const m of models) {
+                    const attrs = m.attributes || m;
+                    if (String(attrs.town_id) === String(town_id)) {
+                        return 'gp_' + attrs.group_id;
                     }
                 }
             }
@@ -164,7 +197,7 @@ class AutoBuild extends DarkUtil {
     };
 
     getTargetsForTown = (town_id) => {
-        const groupId = this.getTownGroup(town_id);
+        const groupId = this.getTownGroupId(town_id);
         return this.groupTargets[groupId] || this.groupTargets['default'] || {};
     };
 
@@ -186,12 +219,13 @@ class AutoBuild extends DarkUtil {
             if (!buildData) return false;
             const costs = buildData.attributes.building_data[type];
             if (!costs) return false;
-            const { wood, stone, iron } = town.resources();
-            const { resources_for, population_for } = costs;
-            if (town.getAvailablePopulation() < population_for) return false;
-            if (wood < resources_for.wood + this.margin) return false;
-            if (stone < resources_for.stone + this.margin) return false;
-            if (iron < resources_for.iron + this.margin) return false;
+            const res = town.resources();
+            const rf = costs.resources_for;
+            const pf = costs.population_for;
+            if (town.getAvailablePopulation() < pf) return false;
+            if (res.wood < rf.wood + this.margin) return false;
+            if (res.stone < rf.stone + this.margin) return false;
+            if (res.iron < rf.iron + this.margin) return false;
             return true;
         } catch (e) { return false; }
     };
@@ -201,9 +235,9 @@ class AutoBuild extends DarkUtil {
             model_url: 'BuildingOrder',
             action_name: 'buildUp',
             arguments: { building_id: type },
-            town_id,
+            town_id: town_id,
         });
-        this.console.log(`AutoBuild: +1 ${type} (cidade ${town_id})`);
+        this.console.log('AutoBuild: +1 ' + type + ' (cidade ' + town_id + ')');
         await this.sleep(Math.random() * 1500 + 1000);
     };
 
@@ -212,9 +246,9 @@ class AutoBuild extends DarkUtil {
             model_url: 'BuildingOrder',
             action_name: 'tearDown',
             arguments: { building_id: type },
-            town_id,
+            town_id: town_id,
         });
-        this.console.log(`AutoBuild: demolir ${type} (cidade ${town_id})`);
+        this.console.log('AutoBuild: demolir ' + type + ' (cidade ' + town_id + ')');
         await this.sleep(Math.random() * 1500 + 1000);
     };
 
@@ -227,7 +261,7 @@ class AutoBuild extends DarkUtil {
             if (target === undefined) continue;
             const current = buildings[type] || 0;
             if (current < target && this.canAfford(town_id, type)) {
-                return { action: 'build', type };
+                return { action: 'build', type: type };
             }
         }
         if (this.demolish) {
@@ -236,7 +270,7 @@ class AutoBuild extends DarkUtil {
                 if (target === undefined) continue;
                 const current = buildings[type] || 0;
                 if (current > target) {
-                    return { action: 'demolish', type };
+                    return { action: 'demolish', type: type };
                 }
             }
         }
@@ -245,13 +279,14 @@ class AutoBuild extends DarkUtil {
 
     main = async () => {
         if (!this.active) return;
-        const now = Date.now();
+        var now = Date.now();
         if (now - this.lastBuild < 5000) return;
         try {
-            const towns = Object.keys(uw.ITowns.towns);
-            for (const town_id of towns) {
+            var towns = Object.keys(uw.ITowns.towns);
+            for (var i = 0; i < towns.length; i++) {
+                var town_id = towns[i];
                 if (this.isQueueFull(town_id)) continue;
-                const action = this.findNextAction(town_id);
+                var action = this.findNextAction(town_id);
                 if (!action) continue;
                 this.lastBuild = Date.now();
                 if (action.action === 'build') {
@@ -262,77 +297,85 @@ class AutoBuild extends DarkUtil {
                 return;
             }
         } catch (e) {
-            this.console.log(`AutoBuild erro: ${e.message}`);
+            this.console.log('AutoBuild erro: ' + e.message);
         }
-    };
-
-    getBuildingDisplay = (name) => {
-        const towns = Object.keys(uw.ITowns.towns);
-        let totalLevel = 0, count = 0;
-        for (const town_id of towns) {
-            const buildings = this.getTownBuildings(town_id);
-            if (buildings) {
-                totalLevel += buildings[name] || 0;
-                count++;
-            }
-        }
-        return { avg: count > 0 ? Math.round(totalLevel / count) : 0 };
     };
 
     render = () => {
-        const groups = this.getGroups();
-        const targets = this.getTargets();
-        const groupOptions = groups.map(g =>
-            `<option value="${g.id}" ${g.id === this.selectedGroup ? 'selected' : ''}>${g.name}</option>`
-        ).join('');
-        return DarkUI.section('Auto Build', `
-            ${DarkUI.checkbox('ab_toggle', 'Ativar AutoBuild', this.active)}
-            <div id="ab_status" class="${this.active ? 'db-status db-status-on' : 'db-status db-status-off'}">
-                ${this.active ? 'Ativo' : 'Inativo'}
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-                <span class="db-label">Grupo:</span>
-                <select id="ab_group_select" style="
-                    background:#1a0f06;border:1px solid #8b6914;border-radius:4px;
-                    color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;
-                ">${groupOptions}</select>
-            </div>
-            ${DarkUI.checkbox('ab_demolish', 'Demolir se acima do nivel', this.demolish)}
-            <div id="ab_building_list" style="margin-top:6px;">
-                ${this.buildBuildingListHTML(targets)}
-            </div>
-        `);
+        var groups = this.getGroups();
+        var towns = this.getTowns();
+        var targets = this.getTargets();
+        var buildings = this.selectedTown ? this.getTownBuildings(this.selectedTown) : null;
+
+        var groupOptions = groups.map(function(g) {
+            return '<option value="' + g.id + '"' + (g.id === this.selectedGroup ? ' selected' : '') + '>' + g.name + '</option>';
+        }.bind(this)).join('');
+
+        var townOptions = '<option value="">-- Selecione --</option>' + towns.map(function(t) {
+            return '<option value="' + t.id + '"' + (t.id === this.selectedTown ? ' selected' : '') + '>' + t.name + '</option>';
+        }.bind(this)).join('');
+
+        return DarkUI.section('Auto Build',
+            DarkUI.checkbox('ab_toggle', 'Ativar AutoBuild', this.active) +
+            '<div id="ab_status" class="' + (this.active ? 'db-status db-status-on' : 'db-status db-status-off') + '">' +
+                (this.active ? 'Ativo' : 'Inativo') +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">' +
+                '<span class="db-label">Cidade:</span>' +
+                '<select id="ab_town_select" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + townOptions + '</select>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">' +
+                '<span class="db-label">Grupo:</span>' +
+                '<select id="ab_group_select" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + groupOptions + '</select>' +
+            '</div>' +
+            DarkUI.checkbox('ab_demolish', 'Demolir se acima do nivel', this.demolish) +
+            '<div id="ab_building_list" style="margin-top:6px;">' +
+                this.buildBuildingListHTML(targets, buildings) +
+            '</div>'
+        );
     };
 
-    afterRender = () => {
-        const panel = document.getElementById('darkbot-panel');
+    afterRenderButtons = () => {
+        var panel = document.getElementById('darkbot-panel');
         if (!panel) return;
-
-        panel.querySelector('[data-darkbot-check="ab_toggle"]').onclick = () => this.toggle();
-        panel.querySelector('[data-darkbot-check="ab_demolish"]').onclick = () => this.toggleDemolish();
-
-        panel.querySelector('#ab_group_select').onchange = (e) => {
-            this.selectedGroup = e.target.value;
-            this.refreshBuildingList();
-        };
-
-        panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {
-            btn.onclick = () => {
-                const id = btn.dataset.darkbotBtn;
-                const match = id.match(/^ab_lvl_(.+)_(inc|dec)$/);
+        var self = this;
+        panel.querySelectorAll('[data-darkbot-btn^="ab_lvl_"]').forEach(function(btn) {
+            btn.onclick = function() {
+                var id = btn.dataset.darkbotBtn;
+                var match = id.match(/^ab_lvl_(.+)_(inc|dec)$/);
                 if (!match) return;
-                const building = match[1];
-                const action = match[2];
-                const targets = this.getTargets();
-                const current = targets[building] || 0;
+                var building = match[1];
+                var action = match[2];
+                var targets = self.getTargets();
+                var current = targets[building] || 0;
                 if (action === 'inc') {
-                    this.setTarget(building, current + 1);
+                    self.setTarget(building, current + 1);
                 } else {
-                    this.setTarget(building, Math.max(0, current - 1));
+                    self.setTarget(building, Math.max(0, current - 1));
                 }
             };
         });
+    };
 
+    afterRender = () => {
+        var panel = document.getElementById('darkbot-panel');
+        if (!panel) return;
+        var self = this;
+
+        panel.querySelector('[data-darkbot-check="ab_toggle"]').onclick = function() { self.toggle(); };
+        panel.querySelector('[data-darkbot-check="ab_demolish"]').onclick = function() { self.toggleDemolish(); };
+
+        panel.querySelector('#ab_group_select').onchange = function(e) {
+            self.selectedGroup = e.target.value;
+            self.refreshBuildingList();
+        };
+
+        panel.querySelector('#ab_town_select').onchange = function(e) {
+            self.selectedTown = e.target.value || null;
+            self.refreshBuildingList();
+        };
+
+        this.afterRenderButtons();
         this.updateToggleUI();
     };
 }
