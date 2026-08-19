@@ -26,87 +26,57 @@ class DarkUtil {
 
     static _tryInstall() {
         if (!DarkUtil._console) return;
-        if (!uw.gpAjax) return;
-        if (uw.gpAjax._dbIntercepted) return;
+        if (uw.gpAjax && uw.gpAjax._dbIntercepted) return;
         var console = DarkUtil._console;
-        var origPost = uw.gpAjax.ajaxPost;
-        var origGet = uw.gpAjax.ajaxGet;
-        uw.gpAjax.ajaxPost = function(controller, action, data, skip, callback) {
-            var wrappedCallback = function(response) {
-                DarkUtil._lastResponse = { controller: controller, action: action, response: response, at: Date.now() };
-                var found = false;
-                if (response && response.errors && response.errors.length > 0) {
-                    var msgs = response.errors.map(function(e) { return e.message || e; });
-                    DarkUtil._lastError = { controller: controller, action: action, messages: msgs, at: Date.now() };
-                    console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs.join(', '));
-                    found = true;
-                }
-                if (response && response.json) {
-                    if (response.json.errors && response.json.errors.length > 0) {
-                        var msgs2 = response.json.errors.map(function(e) { return e.message || e; });
-                        DarkUtil._lastError = { controller: controller, action: action, messages: msgs2, at: Date.now() };
-                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs2.join(', '));
-                        found = true;
+
+        if (uw.gpAjax) {
+            var origPost = uw.gpAjax.ajaxPost;
+            uw.gpAjax.ajaxPost = function(controller, action, data, skip, callback) {
+                var wrappedCallback = function(response) {
+                    DarkUtil._lastResponse = { controller: controller, action: action, response: response, at: Date.now() };
+                    if (response && response.json) {
+                        if (response.json.success === true) DarkUtil._lastError = null;
+                        if (response.json.success === false) {
+                            DarkUtil._lastError = { controller: controller, action: action, messages: ['success=false'], at: Date.now() };
+                        }
                     }
-                    if (response.json.error) {
-                        DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
-                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
-                        found = true;
-                    }
-                    if (response.json.success === false && !found) {
-                        console.log('[API WARN] ' + controller + '/' + action + ': success=false (resposta: ' + JSON.stringify(response.json).substring(0, 300) + ')');
-                    }
-                    if (response.json.success === true) {
-                        DarkUtil._lastError = null;
-                    }
-                }
-                if (controller === 'frontend_bridge' || controller === 'town_info') {
-                    console.log('[API] ' + controller + '/' + action + ': ' + JSON.stringify(response).substring(0, 500));
-                }
-                if (typeof callback === 'function') callback(response);
+                    if (typeof callback === 'function') callback(response);
+                };
+                return origPost.call(uw.gpAjax, controller, action, data, skip, wrappedCallback);
             };
-            return origPost.call(uw.gpAjax, controller, action, data, skip, wrappedCallback);
-        };
-        uw.gpAjax.ajaxGet = function(controller, action, data, skip, callback) {
-            var wrappedCallback = function(response) {
-                DarkUtil._lastResponse = { controller: controller, action: action, response: response, at: Date.now() };
-                var found = false;
-                if (response && response.errors && response.errors.length > 0) {
-                    var msgs = response.errors.map(function(e) { return e.message || e; });
-                    DarkUtil._lastError = { controller: controller, action: action, messages: msgs, at: Date.now() };
-                    console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs.join(', '));
-                    found = true;
-                }
-                if (response && response.json) {
-                    if (response.json.errors && response.json.errors.length > 0) {
-                        var msgs2 = response.json.errors.map(function(e) { return e.message || e; });
-                        DarkUtil._lastError = { controller: controller, action: action, messages: msgs2, at: Date.now() };
-                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + msgs2.join(', '));
-                        found = true;
-                    }
-                    if (response.json.error) {
-                        DarkUtil._lastError = { controller: controller, action: action, messages: [response.json.error], at: Date.now() };
-                        console.log('[API ERRO] ' + controller + '/' + action + ': ' + response.json.error);
-                        found = true;
-                    }
-                    if (response.json.success === true) {
-                        DarkUtil._lastError = null;
-                    }
-                }
-                if (typeof callback === 'function') callback(response);
+            uw.gpAjax._dbIntercepted = true;
+        }
+
+        if (uw.HumanMessage) {
+            var origError = uw.HumanMessage.error;
+            uw.HumanMessage.error = function() {
+                var msg = Array.prototype.slice.call(arguments).join(' ');
+                console.log('[GAME ERRO] ' + msg);
+                DarkUtil._lastError = { controller: 'game', action: 'HumanMessage.error', messages: [msg], at: Date.now() };
+                return origError.apply(uw.HumanMessage, arguments);
             };
-            return origGet.call(uw.gpAjax, controller, action, data, skip, wrappedCallback);
-        };
-        uw.gpAjax._dbIntercepted = true;
-        console.log('[DarkBot] API interceptor instalado');
+            var origSuccess = uw.HumanMessage.success;
+            uw.HumanMessage.success = function() {
+                var msg = Array.prototype.slice.call(arguments).join(' ');
+                console.log('[GAME OK] ' + msg);
+                DarkUtil._lastError = null;
+                return origSuccess.apply(uw.HumanMessage, arguments);
+            };
+            console.log('[DarkBot] HumanMessage interceptor instalado');
+        }
+
+        if (uw.gpAjax) {
+            console.log('[DarkBot] gpAjax interceptor instalado');
+        }
     }
 
     static hasError(controller, action, withinMs) {
         DarkUtil._tryInstall();
         if (!DarkUtil._lastError) return false;
-        if (DarkUtil._lastError.controller !== controller) return false;
-        if (DarkUtil._lastError.action !== action) return false;
         if (withinMs && Date.now() - DarkUtil._lastError.at > withinMs) return false;
+        if (DarkUtil._lastError.controller === 'game') return true;
+        if (controller && DarkUtil._lastError.controller !== controller) return false;
+        if (action && DarkUtil._lastError.action !== action) return false;
         return true;
     }
 
