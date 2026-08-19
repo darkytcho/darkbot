@@ -60,8 +60,8 @@ class DarkUtil {
                         DarkUtil._lastError = null;
                     }
                 }
-                if (!found && response && typeof console !== 'undefined') {
-                    console.log('[API RES] ' + controller + '/' + action + ': ' + JSON.stringify(response).substring(0, 300));
+                if (controller === 'frontend_bridge' || controller === 'town_info') {
+                    console.log('[API] ' + controller + '/' + action + ': ' + JSON.stringify(response).substring(0, 500));
                 }
                 if (typeof callback === 'function') callback(response);
             };
