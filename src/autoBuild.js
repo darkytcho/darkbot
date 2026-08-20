@@ -340,6 +340,13 @@
         return true;
     };
 
+    hasSpecialInGroup = (buildings, group) => {
+        for (var i = 0; i < group.length; i++) {
+            if ((buildings[group[i]] || 0) > 0) return true;
+        }
+        return false;
+    };
+
     findNextAction = (town_id) => {
         const buildings = this.getTownBuildings(town_id);
         if (!buildings) return null;
@@ -358,7 +365,11 @@
             var type = allSpecial[i];
             if (!targets[type]) continue;
             var current = buildings[type] || 0;
-            if (current < 1 && this.canAfford(town_id, type)) {
+            if (current >= 1) continue;
+            var isLeft = this.specialLeft.indexOf(type) !== -1;
+            var group = isLeft ? this.specialLeft : this.specialRight;
+            if (this.hasSpecialInGroup(buildings, group)) continue;
+            if (this.canAfford(town_id, type)) {
                 if (this.isFailed(town_id, 'build', type)) continue;
                 return { action: 'build', type: type };
             }
