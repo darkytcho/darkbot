@@ -10,8 +10,8 @@
             'main', 'farm', 'storage', 'lumber', 'stoner', 'ironer',
             'barracks', 'academy', 'temple', 'market', 'wall', 'hide', 'docks'
         ];
-        this.specialLeft = ['theater', 'baths', 'library', 'lighthouse'];
-        this.specialRight = ['tower', 'statue', 'oracle', 'trader_shop'];
+        this.specialLeft = ['theater', 'thermal', 'library', 'lighthouse'];
+        this.specialRight = ['tower', 'statue', 'oracle', 'trade_office'];
         this.buildingNames = {
             main: 'Senado', farm: 'Fazenda', storage: 'Deposito',
             lumber: 'Serraria', stoner: 'Pedreira', ironer: 'Mina de Prata',
@@ -194,8 +194,8 @@
         var specialRight = ['tower', 'statue', 'oracle', 'trader_shop'];
 
         var specLabels = {
-            theater: 'Teatro', baths: 'Termas', library: 'Biblioteca', lighthouse: 'Farol',
-            tower: 'Torre', statue: 'Estatua', oracle: 'Oraculo', trader_shop: 'Loja do Mercador'
+            theater: 'Teatro', thermal: 'Termas', library: 'Biblioteca', lighthouse: 'Farol',
+            tower: 'Torre', statue: 'Estatua', oracle: 'Oraculo', trade_office: 'Loja do Mercador'
         };
 
         function specialCell(name) {
@@ -345,7 +345,6 @@
             var town = uw.ITowns.getTown(town_id);
             if (!town) return false;
             var attrs = town.getBuildings().attributes;
-            this.console.log('AutoBuild debug edificios: ' + JSON.stringify(attrs));
             for (var i = 0; i < group.length; i++) {
                 if ((attrs[group[i]] || 0) > 0) return true;
             }
@@ -355,7 +354,7 @@
                 if (!order || order.attributes.tear_down) continue;
                 if (group.indexOf(order.attributes.building_type) !== -1) return true;
             }
-        } catch (e) { this.console.log('AutoBuild debug erro: ' + e.message); }
+        } catch (e) {}
         return false;
     };
 
