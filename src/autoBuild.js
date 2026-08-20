@@ -344,9 +344,10 @@
         try {
             var town = uw.ITowns.getTown(town_id);
             if (!town) return false;
-            var buildings = town.getBuildings().attributes;
+            var attrs = town.getBuildings().attributes;
+            this.console.log('AutoBuild debug edificios: ' + JSON.stringify(attrs));
             for (var i = 0; i < group.length; i++) {
-                if ((buildings[group[i]] || 0) > 0) return true;
+                if ((attrs[group[i]] || 0) > 0) return true;
             }
             var orders = town.buildingOrders();
             for (var j = 0; j < orders.length; j++) {
@@ -354,7 +355,7 @@
                 if (!order || order.attributes.tear_down) continue;
                 if (group.indexOf(order.attributes.building_type) !== -1) return true;
             }
-        } catch (e) {}
+        } catch (e) { this.console.log('AutoBuild debug erro: ' + e.message); }
         return false;
     };
 
