@@ -7,15 +7,17 @@
         this.selectedTown = null;
         this.demolish = this.storage.load('ab_demolish', false);
         this.priority = [
-            'farm', 'main', 'storage', 'lumber', 'stoner', 'ironer',
+            'main', 'farm', 'storage', 'lumber', 'stoner', 'ironer',
             'barracks', 'academy', 'temple', 'market', 'wall', 'hide', 'docks'
         ];
+        this.specialLeft = ['theater', 'baths', 'library', 'lighthouse'];
+        this.specialRight = ['tower', 'statue', 'oracle', 'trader_shop'];
         this.buildingNames = {
-            main: 'Ed. Principal', farm: 'Fazenda', storage: 'Deposito',
-            lumber: 'Bosque', stoner: 'Pedreira', ironer: 'Ferreira',
+            main: 'Senado', farm: 'Fazenda', storage: 'Deposito',
+            lumber: 'Serraria', stoner: 'Pedreira', ironer: 'Mina de Prata',
             barracks: 'Quartel', academy: 'Academia', temple: 'Templo',
-            market: 'Mercado', wall: 'Muralha', hide: 'Esconderijo',
-            docks: 'Docas'
+            market: 'Mercado', wall: 'Muralha', hide: 'Gruta',
+            docks: 'Porto'
         };
         this.margin = 10;
         this.interval = null;
@@ -146,17 +148,73 @@
     };
 
     buildBuildingListHTML = (targets, buildings) => {
-        return this.priority.map(name => {
-            const level = buildings ? (buildings[name] || 0) : '--';
-            const target = targets[name] || 0;
-            const label = this.buildingNames[name] || name;
-            return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(139,105,20,0.15);">' +
-                '<span style="flex:1;font-size:11px;color:#aaa;">' + label + '</span>' +
-                '<span style="font-size:11px;color:#fc6;min-width:24px;text-align:center;" data-ab-level="' + name + '">' + level + '</span>' +
-                '<input type="number" min="0" max="50" value="' + target + '" data-ab-input="' + name + '" ' +
-                    'style="width:42px;background:#1a0f06;border:1px solid #8b6914;border-radius:3px;color:#d4a017;text-align:center;font-size:11px;padding:2px 3px;">' +
+        var cellStyle = 'flex:1;text-align:center;min-width:0;';
+        var inputStyle = 'width:38px;background:#1a0f06;border:1px solid #8b6914;border-radius:3px;color:#d4a017;text-align:center;font-size:11px;padding:2px 2px;';
+        var levelStyle = 'font-size:10px;color:#fc6;';
+        var nameStyle = 'font-size:9px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-top:1px;';
+
+        function cell(name, targets, buildings) {
+            var level = buildings ? (buildings[name] || 0) : '--';
+            var target = targets[name] || 0;
+            var label = this.buildingNames[name] || name;
+            return '<div style="' + cellStyle + '">' +
+                '<div style="' + levelStyle + '" data-ab-level="' + name + '">' + level + '</div>' +
+                '<input type="number" min="0" max="50" value="' + target + '" data-ab-input="' + name + '" style="' + inputStyle + '">' +
+                '<div style="' + nameStyle + '">' + label + '</div>' +
                 '</div>';
-        }).join('');
+        }
+
+        var self = this;
+
+        var row1 = '<div style="display:flex;gap:4px;margin-bottom:6px;">' +
+            cell.call(self, 'main', targets, buildings) + '</div>';
+
+        var row2 = '<div style="display:flex;gap:4px;margin-bottom:6px;">' +
+            cell.call(self, 'lumber', targets, buildings) +
+            cell.call(self, 'farm', targets, buildings) +
+            cell.call(self, 'stoner', targets, buildings) +
+            cell.call(self, 'storage', targets, buildings) +
+            '</div>';
+
+        var row3 = '<div style="display:flex;gap:4px;margin-bottom:6px;">' +
+            cell.call(self, 'ironer', targets, buildings) +
+            cell.call(self, 'barracks', targets, buildings) +
+            cell.call(self, 'temple', targets, buildings) +
+            cell.call(self, 'market', targets, buildings) +
+            '</div>';
+
+        var row4 = '<div style="display:flex;gap:4px;margin-bottom:8px;">' +
+            cell.call(self, 'docks', targets, buildings) +
+            cell.call(self, 'academy', targets, buildings) +
+            cell.call(self, 'wall', targets, buildings) +
+            cell.call(self, 'hide', targets, buildings) +
+            '</div>';
+
+        var specialLeft = ['theater', 'baths', 'library', 'lighthouse'];
+        var specialRight = ['tower', 'statue', 'oracle', 'trader_shop'];
+
+        var specLabels = {
+            theater: 'Teatro', baths: 'Termas', library: 'Biblioteca', lighthouse: 'Farol',
+            tower: 'Torre', statue: 'Estatua', oracle: 'Oraculo', trader_shop: 'Loja do Mercador'
+        };
+
+        function specialCell(name) {
+            var target = targets[name] || 0;
+            var checked = target > 0 ? ' checked' : '';
+            var label = specLabels[name] || name;
+            return '<label style="display:flex;align-items:center;gap:4px;font-size:10px;color:#aaa;cursor:pointer;padding:2px 0;">' +
+                '<input type="checkbox" data-ab-spec="' + name + '"' + checked + ' style="accent-color:#8b6914;width:12px;height:12px;">' +
+                '<span>' + label + '</span>' +
+                '</label>';
+        }
+
+        var specHeader = '<div style="font-size:10px;color:#8b6914;margin-top:4px;margin-bottom:3px;">Edificios Especiais</div>';
+        var specSection = '<div style="display:flex;gap:12px;">' +
+            '<div style="flex:1;">' + specialLeft.map(function(n) { return specialCell(n); }).join('') + '</div>' +
+            '<div style="flex:1;">' + specialRight.map(function(n) { return specialCell(n); }).join('') + '</div>' +
+            '</div>';
+
+        return row1 + row2 + row3 + row4 + specHeader + specSection;
     };
 
     getTownBuildings = (town_id) => {
@@ -240,6 +298,13 @@
         } catch (e) { return false; }
     };
 
+    getTownName = (town_id) => {
+        try {
+            var town = uw.ITowns.getTown(town_id);
+            return (town && town.attributes && town.attributes.name) || ('Cidade ' + town_id);
+        } catch (e) { return 'Cidade ' + town_id; }
+    };
+
     buildUp = async (town_id, type) => {
         uw.gpAjax.ajaxPost('frontend_bridge', 'execute', {
             model_url: 'BuildingOrder',
@@ -247,7 +312,7 @@
             arguments: { building_id: type },
             town_id: town_id,
         });
-        this.console.log('AutoBuild: +1 ' + type + ' (cidade ' + town_id + ')');
+        this.console.log('AutoBuild: +1 ' + (this.buildingNames[type] || type) + ' (' + this.getTownName(town_id) + ')');
     };
 
     tearDown = async (town_id, type) => {
@@ -257,7 +322,7 @@
             arguments: { building_id: type },
             town_id: town_id,
         });
-        this.console.log('AutoBuild: demolir ' + type + ' (cidade ' + town_id + ')');
+        this.console.log('AutoBuild: demolir ' + (this.buildingNames[type] || type) + ' (' + this.getTownName(town_id) + ')');
     };
 
     markFailed = (town_id, action, type) => {
@@ -284,6 +349,16 @@
             if (target === undefined) continue;
             const current = buildings[type] || 0;
             if (current < target && this.canAfford(town_id, type)) {
+                if (this.isFailed(town_id, 'build', type)) continue;
+                return { action: 'build', type: type };
+            }
+        }
+        var allSpecial = this.specialLeft.concat(this.specialRight);
+        for (var i = 0; i < allSpecial.length; i++) {
+            var type = allSpecial[i];
+            if (!targets[type]) continue;
+            var current = buildings[type] || 0;
+            if (current < 1 && this.canAfford(town_id, type)) {
                 if (this.isFailed(town_id, 'build', type)) continue;
                 return { action: 'build', type: type };
             }
@@ -391,6 +466,12 @@
                 if (isNaN(val) || val < 0) val = 0;
                 if (val > 50) val = 50;
                 self.setTarget(building, val);
+            };
+        });
+        panel.querySelectorAll('[data-ab-spec]').forEach(function(cb) {
+            var building = cb.dataset.abSpec;
+            cb.onchange = function() {
+                self.setTarget(building, cb.checked ? 1 : 0);
             };
         });
     };
