@@ -340,10 +340,21 @@
         return true;
     };
 
-    hasSpecialInGroup = (buildings, group) => {
-        for (var i = 0; i < group.length; i++) {
-            if ((buildings[group[i]] || 0) > 0) return true;
-        }
+    hasSpecialInGroup = (town_id, group) => {
+        try {
+            var town = uw.ITowns.getTown(town_id);
+            if (!town) return false;
+            var buildings = town.getBuildings().attributes;
+            for (var i = 0; i < group.length; i++) {
+                if ((buildings[group[i]] || 0) > 0) return true;
+            }
+            var orders = town.buildingOrders();
+            for (var j = 0; j < orders.length; j++) {
+                var order = orders.models ? orders.models[j] : orders[j];
+                if (!order || order.attributes.tear_down) continue;
+                if (group.indexOf(order.attributes.building_type) !== -1) return true;
+            }
+        } catch (e) {}
         return false;
     };
 
@@ -364,11 +375,9 @@
         for (var i = 0; i < allSpecial.length; i++) {
             var type = allSpecial[i];
             if (!targets[type]) continue;
-            var current = buildings[type] || 0;
-            if (current >= 1) continue;
             var isLeft = this.specialLeft.indexOf(type) !== -1;
             var group = isLeft ? this.specialLeft : this.specialRight;
-            if (this.hasSpecialInGroup(buildings, group)) continue;
+            if (this.hasSpecialInGroup(town_id, group)) continue;
             if (this.canAfford(town_id, type)) {
                 if (this.isFailed(town_id, 'build', type)) continue;
                 return { action: 'build', type: type };
