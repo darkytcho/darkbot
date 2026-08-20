@@ -482,6 +482,17 @@
         panel.querySelectorAll('[data-ab-spec]').forEach(function(cb) {
             var building = cb.dataset.abSpec;
             cb.onchange = function() {
+                if (cb.checked) {
+                    var isLeft = self.specialLeft.indexOf(building) !== -1;
+                    var group = isLeft ? self.specialLeft : self.specialRight;
+                    group.forEach(function(name) {
+                        if (name !== building) {
+                            self.setTarget(name, 0);
+                            var other = panel.querySelector('[data-ab-spec="' + name + '"]');
+                            if (other) other.checked = false;
+                        }
+                    });
+                }
                 self.setTarget(building, cb.checked ? 1 : 0);
             };
         });
