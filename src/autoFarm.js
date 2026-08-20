@@ -125,7 +125,7 @@ class AutoFarm extends DarkUtil {
         const { models: player_relation_models } = uw.MM.getOnlyCollectionByName('FarmTownPlayerRelation');
         const { models: farm_town_models } = uw.MM.getOnlyCollectionByName('FarmTown');
         const now = Math.floor(Date.now() / 1000);
-        for (let town_id of polis_list) {
+        for (let town_id of DarkUtil.shuffle(polis_list)) {
             let town = uw.ITowns.towns[town_id];
             let x = town.getIslandCoordinateX();
             let y = town.getIslandCoordinateY();

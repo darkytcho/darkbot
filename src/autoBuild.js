@@ -401,7 +401,7 @@
         if (DarkUtil.isLocked()) return;
         if (DarkUtil.hasError('frontend_bridge', 'execute', 3000)) return;
         try {
-            var towns = Object.keys(uw.ITowns.towns);
+            var towns = DarkUtil.shuffle(Object.keys(uw.ITowns.towns));
             for (var i = 0; i < towns.length; i++) {
                 var town_id = towns[i];
                 if (this.isQueueFull(town_id)) continue;
