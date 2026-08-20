@@ -41,11 +41,11 @@
         if (this.active) {
             this.stop();
             this.active = false;
-            this.console.log('AutoBuild desativado');
+            this.console.log('off');
         } else {
             this.active = true;
             this.start();
-            this.console.log('AutoBuild ativado');
+            this.console.log('on');
         }
         this.storage.save('ab_active', this.active);
         this.updateToggleUI();
@@ -114,32 +114,32 @@
     };
 
     updateTargetDisplay = (building) => {
-        const panel = document.getElementById('darkbot-panel');
+        const panel = document.getElementById('_p');
         if (!panel) return;
         const targets = this.getTargets();
         const target = targets[building] || 0;
-        const el = panel.querySelector('[data-ab-input="' + building + '"]');
+        const el = panel.querySelector('[data-bi="' + building + '"]');
         if (el) el.value = target;
     };
 
     updateToggleUI = () => {
-        const panel = document.getElementById('darkbot-panel');
+        const panel = document.getElementById('_p');
         if (!panel) return;
-        const toggleEl = panel.querySelector('[data-darkbot-check="ab_toggle"]');
-        if (toggleEl) toggleEl.classList.toggle('db-on', this.active);
-        const statusEl = panel.querySelector('#ab_status');
+        const toggleEl = panel.querySelector('[data-c="b_toggle"]');
+        if (toggleEl) toggleEl.classList.toggle('x-on', this.active);
+        const statusEl = panel.querySelector('#b_s');
         if (statusEl) {
-            statusEl.className = this.active ? 'db-status db-status-on' : 'db-status db-status-off';
+            statusEl.className = this.active ? 'x-st2 x-son' : 'x-st2 x-soff';
             statusEl.textContent = this.active ? 'Ativo' : 'Inativo';
         }
-        const demoEl = panel.querySelector('[data-darkbot-check="ab_demolish"]');
-        if (demoEl) demoEl.classList.toggle('db-on', this.demolish);
+        const demoEl = panel.querySelector('[data-c="b_demo"]');
+        if (demoEl) demoEl.classList.toggle('x-on', this.demolish);
     };
 
     refreshBuildingList = () => {
-        const panel = document.getElementById('darkbot-panel');
+        const panel = document.getElementById('_p');
         if (!panel) return;
-        const container = panel.querySelector('#ab_building_list');
+        const container = panel.querySelector('#b_l');
         if (!container) return;
         const targets = this.getTargets();
         const buildings = this.selectedTown ? this.getTownBuildings(this.selectedTown) : null;
@@ -158,8 +158,8 @@
             var target = targets[name] || 0;
             var label = this.buildingNames[name] || name;
             return '<div style="' + cellStyle + '">' +
-                '<div style="' + levelStyle + '" data-ab-level="' + name + '">' + level + '</div>' +
-                '<input type="number" min="0" max="50" value="' + target + '" data-ab-input="' + name + '" style="' + inputStyle + '">' +
+                '<div style="' + levelStyle + '" data-bl="' + name + '">' + level + '</div>' +
+                '<input type="number" min="0" max="50" value="' + target + '" data-bi="' + name + '" style="' + inputStyle + '">' +
                 '<div style="' + nameStyle + '">' + label + '</div>' +
                 '</div>';
         }
@@ -190,9 +190,6 @@
             cell.call(self, 'hide', targets, buildings) +
             '</div>';
 
-        var specialLeft = ['theater', 'baths', 'library', 'lighthouse'];
-        var specialRight = ['tower', 'statue', 'oracle', 'trader_shop'];
-
         var specLabels = {
             theater: 'Teatro', thermal: 'Termas', library: 'Biblioteca', lighthouse: 'Farol',
             tower: 'Torre', statue: 'Estatua', oracle: 'Oraculo', trade_office: 'Loja do Mercador'
@@ -203,15 +200,15 @@
             var checked = target > 0 ? ' checked' : '';
             var label = specLabels[name] || name;
             return '<label style="display:flex;align-items:center;gap:4px;font-size:10px;color:#aaa;cursor:pointer;padding:2px 0;">' +
-                '<input type="checkbox" data-ab-spec="' + name + '"' + checked + ' style="accent-color:#8b6914;width:12px;height:12px;">' +
+                '<input type="checkbox" data-bs="' + name + '"' + checked + ' style="accent-color:#8b6914;width:12px;height:12px;">' +
                 '<span>' + label + '</span>' +
                 '</label>';
         }
 
         var specHeader = '<div style="font-size:10px;color:#8b6914;margin-top:4px;margin-bottom:3px;">Edificios Especiais</div>';
         var specSection = '<div style="display:flex;gap:12px;">' +
-            '<div style="flex:1;">' + specialLeft.map(function(n) { return specialCell(n); }).join('') + '</div>' +
-            '<div style="flex:1;">' + specialRight.map(function(n) { return specialCell(n); }).join('') + '</div>' +
+            '<div style="flex:1;">' + this.specialLeft.map(function(n) { return specialCell(n); }).join('') + '</div>' +
+            '<div style="flex:1;">' + this.specialRight.map(function(n) { return specialCell(n); }).join('') + '</div>' +
             '</div>';
 
         return row1 + row2 + row3 + row4 + specHeader + specSection;
@@ -312,7 +309,7 @@
             arguments: { building_id: type },
             town_id: town_id,
         });
-        this.console.log('AutoBuild: +1 ' + (this.buildingNames[type] || type) + ' (' + this.getTownName(town_id) + ')');
+        this.console.log('+1 ' + (this.buildingNames[type] || type) + ' (' + this.getTownName(town_id) + ')');
     };
 
     tearDown = async (town_id, type) => {
@@ -322,7 +319,7 @@
             arguments: { building_id: type },
             town_id: town_id,
         });
-        this.console.log('AutoBuild: demolir ' + (this.buildingNames[type] || type) + ' (' + this.getTownName(town_id) + ')');
+        this.console.log('-1 ' + (this.buildingNames[type] || type) + ' (' + this.getTownName(town_id) + ')');
     };
 
     markFailed = (town_id, action, type) => {
@@ -416,7 +413,7 @@
                 this.lastBuild = Date.now();
                 try {
                     if (changedCity) {
-                        this.console.log('AutoBuild: trocou cidade, aguardando 3s...');
+                        this.console.log('wait...');
                         await this.randomDelay(3000, 1000);
                     }
                     await this.randomDelay(500, 500);
@@ -428,7 +425,7 @@
                     }
                     if (DarkUtil._lastError) {
                         this.markFailed(town_id, action.action, action.type);
-                        this.console.log('AutoBuild: ignorando ' + action.type + ' por 5min');
+                        this.console.log('skip ' + action.type + ' 5min');
                     }
                 } finally {
                     DarkUtil.releaseLock('autobuild');
@@ -437,7 +434,7 @@
             }
         } catch (e) {
             DarkUtil.releaseLock('autobuild');
-            this.console.log('AutoBuild erro: ' + e.message);
+            this.console.log('err: ' + e.message);
         }
     };
 
@@ -456,31 +453,31 @@
         }.bind(this)).join('');
 
         return DarkUI.section('Auto Build',
-            DarkUI.checkbox('ab_toggle', 'Ativar AutoBuild', this.active) +
-            '<div id="ab_status" class="' + (this.active ? 'db-status db-status-on' : 'db-status db-status-off') + '">' +
+            DarkUI.checkbox('b_toggle', 'Ativar AutoBuild', this.active) +
+            '<div id="b_s" class="' + (this.active ? 'x-st2 x-son' : 'x-st2 x-soff') + '">' +
                 (this.active ? 'Ativo' : 'Inativo') +
             '</div>' +
             '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">' +
-                '<span class="db-label">Cidade:</span>' +
-                '<select id="ab_town_select" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + townOptions + '</select>' +
+                '<span class="x-l">Cidade:</span>' +
+                '<select id="b_ts" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + townOptions + '</select>' +
             '</div>' +
             '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">' +
-                '<span class="db-label">Grupo:</span>' +
-                '<select id="ab_group_select" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + groupOptions + '</select>' +
+                '<span class="x-l">Grupo:</span>' +
+                '<select id="b_gs" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + groupOptions + '</select>' +
             '</div>' +
-            DarkUI.checkbox('ab_demolish', 'Demolir se acima do nivel', this.demolish) +
-            '<div id="ab_building_list" style="margin-top:6px;">' +
+            DarkUI.checkbox('b_demo', 'Demolir se acima do nivel', this.demolish) +
+            '<div id="b_l" style="margin-top:6px;">' +
                 this.buildBuildingListHTML(targets, buildings) +
             '</div>'
         );
     };
 
     afterRenderButtons = () => {
-        var panel = document.getElementById('darkbot-panel');
+        var panel = document.getElementById('_p');
         if (!panel) return;
         var self = this;
-        panel.querySelectorAll('[data-ab-input]').forEach(function(input) {
-            var building = input.dataset.abInput;
+        panel.querySelectorAll('[data-bi]').forEach(function(input) {
+            var building = input.dataset.bi;
             input.onchange = function() {
                 var val = parseInt(input.value, 10);
                 if (isNaN(val) || val < 0) val = 0;
@@ -488,8 +485,8 @@
                 self.setTarget(building, val);
             };
         });
-        panel.querySelectorAll('[data-ab-spec]').forEach(function(cb) {
-            var building = cb.dataset.abSpec;
+        panel.querySelectorAll('[data-bs]').forEach(function(cb) {
+            var building = cb.dataset.bs;
             cb.onchange = function() {
                 if (cb.checked) {
                     var isLeft = self.specialLeft.indexOf(building) !== -1;
@@ -497,7 +494,7 @@
                     group.forEach(function(name) {
                         if (name !== building) {
                             self.setTarget(name, 0);
-                            var other = panel.querySelector('[data-ab-spec="' + name + '"]');
+                            var other = panel.querySelector('[data-bs="' + name + '"]');
                             if (other) other.checked = false;
                         }
                     });
@@ -508,19 +505,19 @@
     };
 
     afterRender = () => {
-        var panel = document.getElementById('darkbot-panel');
+        var panel = document.getElementById('_p');
         if (!panel) return;
         var self = this;
 
-        panel.querySelector('[data-darkbot-check="ab_toggle"]').onclick = function() { self.toggle(); };
-        panel.querySelector('[data-darkbot-check="ab_demolish"]').onclick = function() { self.toggleDemolish(); };
+        panel.querySelector('[data-c="b_toggle"]').onclick = function() { self.toggle(); };
+        panel.querySelector('[data-c="b_demo"]').onclick = function() { self.toggleDemolish(); };
 
-        panel.querySelector('#ab_group_select').onchange = function(e) {
+        panel.querySelector('#b_gs').onchange = function(e) {
             self.selectedGroup = e.target.value;
             self.refreshBuildingList();
         };
 
-        panel.querySelector('#ab_town_select').onchange = function(e) {
+        panel.querySelector('#b_ts').onchange = function(e) {
             self.selectedTown = e.target.value || null;
             self.refreshBuildingList();
         };

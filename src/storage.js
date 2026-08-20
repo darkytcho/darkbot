@@ -12,7 +12,7 @@ class DarkStorage {
 
     getStorage = () => {
         var worldId = this.getWorldId();
-        var savedValue = localStorage.getItem(worldId + '_darkBot');
+        var savedValue = localStorage.getItem(worldId + '_cfg');
         var storage = {};
         if (savedValue !== null && savedValue !== undefined) {
             try { storage = JSON.parse(savedValue); } catch (e) {}
@@ -23,7 +23,7 @@ class DarkStorage {
     saveStorage = storage => {
         try {
             var worldId = this.getWorldId();
-            localStorage.setItem(worldId + '_darkBot', JSON.stringify(storage));
+            localStorage.setItem(worldId + '_cfg', JSON.stringify(storage));
             return true;
         } catch (e) { return false; }
     };

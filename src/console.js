@@ -12,7 +12,7 @@ class DarkConsole {
     };
 
     renderSettings = () => {
-        return `<div id="dark_console" class="db-console"></div>`;
+        return `<div id="_cl" class="x-co"></div>`;
     };
 
     startLiveUpdate = () => {
@@ -20,10 +20,10 @@ class DarkConsole {
     };
 
     _updateView = () => {
-        const el = document.getElementById('dark_console');
+        const el = document.getElementById('_cl');
         if (!el) return;
         el.innerHTML = this.logs.slice().reverse().map(l =>
-            `<div class="db-console-line"><span class="db-time">[${l.time}]</span> ${l.message}</div>`
+            `<div class="x-cl"><span class="x-tm">[${l.time}]</span> ${l.message}</div>`
         ).join('');
     };
 }

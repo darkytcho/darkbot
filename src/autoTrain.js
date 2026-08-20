@@ -42,11 +42,11 @@ class AutoTrain extends DarkUtil {
         if (this.active) {
             this.stop();
             this.active = false;
-            this.console.log('AutoTrain desativado');
+            this.console.log('off');
         } else {
             this.active = true;
             this.start();
-            this.console.log('AutoTrain ativado');
+            this.console.log('on');
         }
         this.storage.save('at_active', this.active);
         this.updateToggleUI();
@@ -99,29 +99,29 @@ class AutoTrain extends DarkUtil {
     };
 
     updateTargetDisplay = (unit) => {
-        var panel = document.getElementById('darkbot-panel');
+        var panel = document.getElementById('_p');
         if (!panel) return;
         var targets = this.getTargets();
-        var el = panel.querySelector('[data-at-input="' + unit + '"]');
+        var el = panel.querySelector('[data-ti="' + unit + '"]');
         if (el) el.value = targets[unit] || 0;
     };
 
     updateToggleUI = () => {
-        var panel = document.getElementById('darkbot-panel');
+        var panel = document.getElementById('_p');
         if (!panel) return;
-        var toggleEl = panel.querySelector('[data-darkbot-check="at_toggle"]');
-        if (toggleEl) toggleEl.classList.toggle('db-on', this.active);
-        var statusEl = panel.querySelector('#at_status');
+        var toggleEl = panel.querySelector('[data-c="t_toggle"]');
+        if (toggleEl) toggleEl.classList.toggle('x-on', this.active);
+        var statusEl = panel.querySelector('#t_s');
         if (statusEl) {
-            statusEl.className = this.active ? 'db-status db-status-on' : 'db-status db-status-off';
+            statusEl.className = this.active ? 'x-st2 x-son' : 'x-st2 x-soff';
             statusEl.textContent = this.active ? 'Ativo' : 'Inativo';
         }
     };
 
     refreshUnitList = () => {
-        var panel = document.getElementById('darkbot-panel');
+        var panel = document.getElementById('_p');
         if (!panel) return;
-        var container = panel.querySelector('#at_unit_list');
+        var container = panel.querySelector('#t_l');
         if (!container) return;
         var targets = this.getTargets();
         var counts = this.selectedTown ? this.getTownUnits(this.selectedTown) : null;
@@ -152,8 +152,8 @@ class AutoTrain extends DarkUtil {
             var label = this.unitNames[name] || name;
             return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(139,105,20,0.15);">' +
                 '<span style="flex:1;font-size:11px;color:#aaa;">' + label + '</span>' +
-                '<span style="font-size:11px;color:#fc6;min-width:24px;text-align:center;" data-at-count="' + name + '">' + current + '</span>' +
-                '<input type="number" min="0" max="500" value="' + target + '" data-at-input="' + name + '" ' +
+                '<span style="font-size:11px;color:#fc6;min-width:24px;text-align:center;" data-tc="' + name + '">' + current + '</span>' +
+                '<input type="number" min="0" max="500" value="' + target + '" data-ti="' + name + '" ' +
                     'style="width:50px;background:#1a0f06;border:1px solid #8b6914;border-radius:3px;color:#d4a017;text-align:center;font-size:11px;padding:2px 3px;">' +
                 '</div>';
         }.bind(this)).join('');
@@ -247,7 +247,7 @@ class AutoTrain extends DarkUtil {
             arguments: { unit_id: unit },
             town_id: town_id,
         });
-        this.console.log('AutoTrain: ' + unit + ' (cidade ' + town_id + ')');
+        this.console.log(unit + ' (' + town_id + ')');
     };
 
     findNextAction = (town_id) => {
@@ -288,7 +288,7 @@ class AutoTrain extends DarkUtil {
                 this.lastTrain = Date.now();
                 try {
                     if (changedCity) {
-                        this.console.log('AutoTrain: trocou cidade, aguardando 5s...');
+                        this.console.log('wait...');
                         await this.randomDelay(5000, 1000);
                     }
                     await this.randomDelay(1500, 1500);
@@ -301,7 +301,7 @@ class AutoTrain extends DarkUtil {
             }
         } catch (e) {
             DarkUtil.releaseLock('autotrain');
-            this.console.log('AutoTrain erro: ' + e.message);
+            this.console.log('err: ' + e.message);
         }
     };
 
@@ -320,30 +320,30 @@ class AutoTrain extends DarkUtil {
         }.bind(this)).join('');
 
         return DarkUI.section('Auto Train',
-            DarkUI.checkbox('at_toggle', 'Ativar AutoTrain', this.active) +
-            '<div id="at_status" class="' + (this.active ? 'db-status db-status-on' : 'db-status db-status-off') + '">' +
+            DarkUI.checkbox('t_toggle', 'Ativar AutoTrain', this.active) +
+            '<div id="t_s" class="' + (this.active ? 'x-st2 x-son' : 'x-st2 x-soff') + '">' +
                 (this.active ? 'Ativo' : 'Inativo') +
             '</div>' +
             '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">' +
-                '<span class="db-label">Cidade:</span>' +
-                '<select id="at_town_select" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + townOptions + '</select>' +
+                '<span class="x-l">Cidade:</span>' +
+                '<select id="t_ts" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + townOptions + '</select>' +
             '</div>' +
             '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">' +
-                '<span class="db-label">Grupo:</span>' +
-                '<select id="at_group_select" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + groupOptions + '</select>' +
+                '<span class="x-l">Grupo:</span>' +
+                '<select id="t_gs" style="flex:1;background:#1a0f06;border:1px solid #8b6914;border-radius:4px;color:#fc6;padding:4px 8px;font-size:11px;cursor:pointer;">' + groupOptions + '</select>' +
             '</div>' +
-            '<div id="at_unit_list" style="margin-top:6px;">' +
+            '<div id="t_l" style="margin-top:6px;">' +
                 this.buildUnitListHTML(targets, counts) +
             '</div>'
         );
     };
 
     afterRenderInputs = () => {
-        var panel = document.getElementById('darkbot-panel');
+        var panel = document.getElementById('_p');
         if (!panel) return;
         var self = this;
-        panel.querySelectorAll('[data-at-input]').forEach(function(input) {
-            var unit = input.dataset.atInput;
+        panel.querySelectorAll('[data-ti]').forEach(function(input) {
+            var unit = input.dataset.ti;
             input.onchange = function() {
                 var val = parseInt(input.value, 10);
                 if (isNaN(val) || val < 0) val = 0;
@@ -354,18 +354,18 @@ class AutoTrain extends DarkUtil {
     };
 
     afterRender = () => {
-        var panel = document.getElementById('darkbot-panel');
+        var panel = document.getElementById('_p');
         if (!panel) return;
         var self = this;
 
-        panel.querySelector('[data-darkbot-check="at_toggle"]').onclick = function() { self.toggle(); };
+        panel.querySelector('[data-c="t_toggle"]').onclick = function() { self.toggle(); };
 
-        panel.querySelector('#at_group_select').onchange = function(e) {
+        panel.querySelector('#t_gs').onchange = function(e) {
             self.selectedGroup = e.target.value;
             self.refreshUnitList();
         };
 
-        panel.querySelector('#at_town_select').onchange = function(e) {
+        panel.querySelector('#t_ts').onchange = function(e) {
             self.selectedTown = e.target.value || null;
             self.refreshUnitList();
         };

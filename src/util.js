@@ -26,7 +26,7 @@ class DarkUtil {
 
     static _tryInstall() {
         if (!DarkUtil._console) return;
-        if (uw.gpAjax && uw.gpAjax._dbIntercepted) return;
+        if (uw.gpAjax && uw.gpAjax._i) return;
         var console = DarkUtil._console;
 
         if (uw.gpAjax) {
@@ -44,29 +44,29 @@ class DarkUtil {
                 };
                 return origPost.call(uw.gpAjax, controller, action, data, skip, wrappedCallback);
             };
-            uw.gpAjax._dbIntercepted = true;
+            uw.gpAjax._i = true;
         }
 
         if (uw.HumanMessage) {
             var origError = uw.HumanMessage.error;
             uw.HumanMessage.error = function() {
                 var msg = Array.prototype.slice.call(arguments).join(' ');
-                console.log('[GAME ERRO] ' + msg);
+                console.log('[!] ' + msg);
                 DarkUtil._lastError = { controller: 'game', action: 'HumanMessage.error', messages: [msg], at: Date.now() };
                 return origError.apply(uw.HumanMessage, arguments);
             };
             var origSuccess = uw.HumanMessage.success;
             uw.HumanMessage.success = function() {
                 var msg = Array.prototype.slice.call(arguments).join(' ');
-                console.log('[GAME OK] ' + msg);
+                console.log('[+] ' + msg);
                 DarkUtil._lastError = null;
                 return origSuccess.apply(uw.HumanMessage, arguments);
             };
-            console.log('[DarkBot] HumanMessage interceptor instalado');
+            console.log('[i] hm ok');
         }
 
         if (uw.gpAjax) {
-            console.log('[DarkBot] gpAjax interceptor instalado');
+            console.log('[i] ajax ok');
         }
     }
 

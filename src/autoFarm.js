@@ -25,22 +25,22 @@ class AutoFarm extends DarkUtil {
         if (this.active) {
             clearInterval(this.active);
             this.active = null;
-            this.console.log('AutoFarm desativado');
+            this.console.log('off');
         } else {
             this.updateTimer();
             this.active = setInterval(this.main, 1000);
-            this.console.log('AutoFarm ativado');
+            this.console.log('on');
         }
         this.storage.save('af_active', !!this.active);
         this.updateButtons();
     };
 
     updateButtons = () => {
-        const panel = document.getElementById('darkbot-panel');
+        const panel = document.getElementById('_p');
         if (!panel) return;
 
-        panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {
-            const id = btn.dataset.darkbotBtn;
+        panel.querySelectorAll('[data-d]').forEach(btn => {
+            const id = btn.dataset.d;
             let isActive = false;
             if (id === 'dur_5') isActive = this.timing === 300000;
             if (id === 'dur_10') isActive = this.timing === 600000;
@@ -48,15 +48,15 @@ class AutoFarm extends DarkUtil {
             if (id === 'stor_80') isActive = this.percent === 0.8;
             if (id === 'stor_90') isActive = this.percent === 0.9;
             if (id === 'stor_100') isActive = this.percent === 1;
-            btn.classList.toggle('db-btn-active', isActive);
+            btn.classList.toggle('x-ba', isActive);
         });
 
-        const toggleEl = panel.querySelector('[data-darkbot-check="af_toggle"]');
-        if (toggleEl) toggleEl.classList.toggle('db-on', !!this.active);
+        const toggleEl = panel.querySelector('[data-c="af_toggle"]');
+        if (toggleEl) toggleEl.classList.toggle('x-on', !!this.active);
 
-        const statusEl = panel.querySelector('#af_status');
+        const statusEl = panel.querySelector('#f_s');
         if (statusEl) {
-            statusEl.className = this.active ? 'db-status db-status-on' : 'db-status db-status-off';
+            statusEl.className = this.active ? 'x-st2 x-son' : 'x-st2 x-soff';
             statusEl.textContent = this.active ? 'Ativo' : 'Inativo';
         }
     };
@@ -96,7 +96,7 @@ class AutoFarm extends DarkUtil {
         const currentTime = Date.now();
         this.timer -= currentTime - this.lastTime;
         this.lastTime = currentTime;
-        const timerEl = document.querySelector('#af_timer');
+        const timerEl = document.querySelector('#f_t');
         if (timerEl) {
             const secs = Math.round(Math.max(this.timer, 0) / 1000);
             const min = Math.floor(secs / 60);
@@ -227,12 +227,12 @@ class AutoFarm extends DarkUtil {
     render = () => {
         return DarkUI.section('Auto Farm', `
             ${DarkUI.checkbox('af_toggle', 'Ativar AutoFarm', this.active)}
-            <div id="af_status" class="${this.active ? 'db-status db-status-on' : 'db-status db-status-off'}">
+            <div id="f_s" class="${this.active ? 'x-st2 x-son' : 'x-st2 x-soff'}">
                 ${this.active ? 'Ativo' : 'Inativo'}
             </div>
             <div style="margin-top:6px;">
-                <span class="db-label">Proxima coleta:</span>
-                <span id="af_timer" style="color:#d4a017;font-weight:700;">--:--</span>
+                <span class="x-l">Proxima coleta:</span>
+                <span id="f_t" style="color:#d4a017;font-weight:700;">--:--</span>
             </div>
             ${DarkUI.row('Duracao', `
                 ${DarkUI.btn('dur_5', '5 min', this.timing === 300000)}
@@ -248,14 +248,14 @@ class AutoFarm extends DarkUtil {
     };
 
     afterRender = () => {
-        const panel = document.getElementById('darkbot-panel');
+        const panel = document.getElementById('_p');
         if (!panel) return;
 
-        panel.querySelector('[data-darkbot-check="af_toggle"]').onclick = () => this.toggle();
+        panel.querySelector('[data-c="af_toggle"]').onclick = () => this.toggle();
 
-        panel.querySelectorAll('[data-darkbot-btn]').forEach(btn => {
+        panel.querySelectorAll('[data-d]').forEach(btn => {
             btn.onclick = () => {
-                const id = btn.dataset.darkbotBtn;
+                const id = btn.dataset.d;
                 if (id === 'dur_5') this.setDuration(300000);
                 if (id === 'dur_10') this.setDuration(600000);
                 if (id === 'dur_20') this.setDuration(1200000);
