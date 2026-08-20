@@ -17,7 +17,7 @@
             market: 'Mercado', wall: 'Muralha', hide: 'Esconderijo',
             docks: 'Docas'
         };
-        this.margin = 20;
+        this.margin = 10;
         this.interval = null;
         this.lastBuild = 0;
         this.lastTown = null;
@@ -324,7 +324,7 @@
                         this.console.log('AutoBuild: trocou cidade, aguardando 3s...');
                         await this.randomDelay(3000, 1000);
                     }
-                    await this.randomDelay(1000, 1000);
+                    await this.randomDelay(500, 500);
                     DarkUtil._lastError = null;
                     if (action.action === 'build') {
                         await this.buildUp(town_id, action.type);
